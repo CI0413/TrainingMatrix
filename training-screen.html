@@ -1,0 +1,1725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Training Screen</title>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #1a1a1a;
+        }
+
+        .trainer-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #666;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-group input,
+        .form-group select {
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #0066cc;
+            box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+        }
+
+        /* Mode Selection */
+        .mode-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .mode-section h2 {
+            font-size: 16px;
+            margin-bottom: 16px;
+            color: #1a1a1a;
+        }
+
+        .mode-toggle {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .mode-btn {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #ddd;
+            background: white;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .mode-btn.active {
+            border-color: #0066cc;
+            background: #0066cc;
+            color: white;
+        }
+
+        .mode-btn:hover:not(.active) {
+            border-color: #0066cc;
+        }
+
+        /* Document & Employee Selection */
+        .selection-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .selection-section h2 {
+            font-size: 16px;
+            margin-bottom: 16px;
+            color: #1a1a1a;
+        }
+
+        .role-selector {
+            margin-bottom: 20px;
+        }
+
+        .documents-list {
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+
+        .document-item,
+        .employee-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+
+        .document-item:hover,
+        .employee-item:hover {
+            background: #f9f9f9;
+        }
+
+        .document-item input[type="checkbox"],
+        .employee-item input[type="checkbox"] {
+            margin-right: 12px;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .document-item label,
+        .employee-item label {
+            cursor: pointer;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .document-badge {
+            font-size: 12px;
+            background: #f0f0f0;
+            padding: 2px 8px;
+            border-radius: 3px;
+            color: #666;
+        }
+
+        .add-custom-topic {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .add-custom-topic input {
+            flex: 1;
+        }
+
+        .btn {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #0066cc;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #0052a3;
+        }
+
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #d0d0d0;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Sign-In Sheet */
+        .signin-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .signin-section h2 {
+            font-size: 16px;
+            margin-bottom: 16px;
+            color: #1a1a1a;
+        }
+
+        .signin-sheet {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .employee-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 16px;
+            background: #fafafa;
+            transition: box-shadow 0.2s;
+        }
+
+        .employee-card.has-signature {
+            border-color: #4caf50;
+            background: #f1f8f4;
+        }
+
+        .employee-header {
+            margin-bottom: 12px;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 8px;
+        }
+
+        .employee-name {
+            font-weight: 600;
+            font-size: 15px;
+            color: #1a1a1a;
+        }
+
+        .employee-role {
+            font-size: 12px;
+            color: #666;
+            margin-top: 2px;
+        }
+
+        .signature-container {
+            margin-bottom: 12px;
+        }
+
+        .signature-mode-toggle {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+            font-size: 12px;
+        }
+
+        .signature-mode-btn {
+            flex: 1;
+            padding: 6px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .signature-mode-btn.active {
+            border-color: #0066cc;
+            background: #0066cc;
+            color: white;
+        }
+
+        canvas {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: white;
+            display: block;
+            cursor: crosshair;
+            width: 100%;
+            height: 100px;
+            max-width: 100%;
+        }
+
+        .signature-input {
+            font-family: 'Brush Script MT', 'Lucida Calligraphy', cursive;
+            font-size: 28px;
+            padding: 8px;
+            text-align: center;
+            letter-spacing: 2px;
+        }
+
+        .signature-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .signature-actions button {
+            flex: 1;
+            padding: 6px;
+            font-size: 12px;
+        }
+
+        .signature-status {
+            font-size: 12px;
+            text-align: center;
+            margin-top: 8px;
+            font-weight: 600;
+        }
+
+        .signature-status.signed {
+            color: #4caf50;
+        }
+
+        .signature-status.empty {
+            color: #ff9800;
+        }
+
+        /* Trainer Signature Section */
+        .trainer-signature-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border: 2px solid #ff6b6b;
+        }
+
+        .trainer-signature-section h2 {
+            font-size: 16px;
+            margin-bottom: 16px;
+            color: #1a1a1a;
+        }
+
+        .trainer-sig-container {
+            max-width: 400px;
+        }
+
+        .trainer-sig-mode-toggle {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+            font-size: 12px;
+        }
+
+        .trainer-sig-mode-btn {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .trainer-sig-mode-btn.active {
+            border-color: #ff6b6b;
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .trainer-canvas {
+            border: 2px solid #ff6b6b;
+        }
+
+        .trainer-sig-status {
+            font-size: 13px;
+            margin-top: 12px;
+            font-weight: 600;
+        }
+
+        .trainer-sig-status.signed {
+            color: #4caf50;
+        }
+
+        .trainer-sig-status.empty {
+            color: #ff6b6b;
+        }
+
+        /* Form Actions */
+        .form-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .form-actions .btn {
+            flex: 1;
+            padding: 14px;
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        /* Toast Notifications */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #333;
+            color: white;
+            padding: 16px 20px;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            font-size: 14px;
+            z-index: 9999;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .toast.success {
+            background: #4caf50;
+        }
+
+        .toast.error {
+            background: #ff6b6b;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        @media (max-width: 768px) {
+            .signin-sheet {
+                grid-template-columns: 1fr;
+            }
+
+            .trainer-info {
+                grid-template-columns: 1fr;
+            }
+
+            canvas {
+                height: 120px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h1 style="margin: 0;">Training Session Form</h1>
+                <button class="btn btn-secondary" onclick="toggleRecordsView()" id="viewRecordsBtn">View Past Records</button>
+            </div>
+            
+            <div class="trainer-info">
+                <div class="form-group">
+                    <label for="trainerName">Trainer Name</label>
+                    <input type="text" id="trainerName" placeholder="Enter your name" required>
+                </div>
+                <div class="form-group">
+                    <label for="trainerRole">Trainer Role</label>
+                    <select id="trainerRole" required>
+                        <option value="">Select role...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="trainingDate">Date</label>
+                    <input type="date" id="trainingDate" required>
+                </div>
+            </div>
+        </div>
+
+        <div class="mode-section">
+            <h2>Training Mode</h2>
+            <div class="mode-toggle">
+                <button class="mode-btn active" data-mode="role-based">Role-Based Training</button>
+                <button class="mode-btn" data-mode="custom">Custom / Incident Training</button>
+            </div>
+
+            <!-- Role-Based Mode -->
+            <div id="roleBasedMode" class="mode-content">
+                <div class="role-selector">
+                    <div class="form-group">
+                        <label for="selectedRole">Select Role</label>
+                        <select id="selectedRole" required>
+                            <option value="">Choose a role...</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="roleDocumentsContainer"></div>
+            </div>
+
+            <!-- Custom Mode -->
+            <div id="customMode" class="mode-content hidden">
+                <div class="add-custom-topic">
+                    <input type="text" id="customTopic" placeholder="Enter custom topic (e.g., CAPA, Process Change)">
+                    <button class="btn btn-primary" onclick="addCustomTopic()">Add Topic</button>
+                </div>
+                <div id="customDocumentsContainer"></div>
+            </div>
+        </div>
+
+        <!-- Employee Selection -->
+        <div class="selection-section">
+            <h2>Select Employees Attending</h2>
+            <div id="employeesContainer" class="documents-list"></div>
+        </div>
+
+        <!-- Sign-In Sheet -->
+        <div class="signin-section">
+            <h2>Sign-In Sheet</h2>
+            <div id="signinSheet" class="signin-sheet"></div>
+        </div>
+
+        <!-- Trainer Signature -->
+        <div class="trainer-signature-section">
+            <h2>Trainer Sign-Off (Required)</h2>
+            <div class="trainer-sig-container">
+                <div class="trainer-sig-mode-toggle">
+                    <button class="trainer-sig-mode-btn active" data-sig-mode="draw">Draw</button>
+                    <button class="trainer-sig-mode-btn" data-sig-mode="type">Type Name</button>
+                </div>
+                <canvas id="trainerCanvas" class="trainer-canvas" width="300" height="120"></canvas>
+                <input type="text" id="trainerTypedName" class="signature-input hidden" placeholder="Type your name">
+                <div class="signature-actions">
+                    <button class="btn btn-secondary" onclick="clearTrainerSignature()">Clear</button>
+                </div>
+                <div id="trainerSigStatus" class="trainer-sig-status empty">Signature required</div>
+            </div>
+        </div>
+
+        <!-- Training Records View (Hidden by default) -->
+        <div id="recordsScreen" class="hidden" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 9998;">
+            <div style="background: white; border-radius: 8px; padding: 40px; max-width: 900px; width: 95%; max-height: 90vh; overflow-y: auto;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                    <h2 style="margin: 0; color: #1a1a1a;">Training Records</h2>
+                    <button onclick="closeRecordsView()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #666;">&times;</button>
+                </div>
+
+                <div style="margin-bottom: 24px; display: flex; gap: 12px;">
+                    <input type="text" id="recordsSearchInput" placeholder="Search by trainer name or employee..." style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
+                    <button class="btn btn-primary" onclick="loadTrainingRecords()">Search</button>
+                </div>
+
+                <div id="recordsList" style="border: 1px solid #ddd; border-radius: 6px; max-height: 600px; overflow-y: auto;">
+                    <p style="padding: 20px; color: #999; text-align: center;">Loading records...</p>
+                </div>
+
+                <div style="margin-top: 20px; text-align: right;">
+                    <button onclick="closeRecordsView()" class="btn btn-secondary">Close</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Review Screen (Hidden by default) -->
+        <div id="reviewScreen" class="hidden" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 9999;">
+            <div style="background: white; border-radius: 8px; padding: 40px; max-width: 700px; width: 90%; max-height: 80vh; overflow-y: auto;">
+                <h2 style="margin-bottom: 24px; color: #1a1a1a;">Review Training Session</h2>
+                
+                <div style="margin-bottom: 24px;">
+                    <h3 style="font-size: 14px; font-weight: 600; color: #666; margin-bottom: 12px; text-transform: uppercase;">Trainer Information</h3>
+                    <div style="background: #f5f5f5; padding: 16px; border-radius: 6px;">
+                        <p style="margin: 6px 0;"><strong>Name:</strong> <span id="reviewTrainerName"></span></p>
+                        <p style="margin: 6px 0;"><strong>Role:</strong> <span id="reviewTrainerRole"></span></p>
+                        <p style="margin: 6px 0;"><strong>Date:</strong> <span id="reviewTrainingDate"></span></p>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 24px;">
+                    <h3 style="font-size: 14px; font-weight: 600; color: #666; margin-bottom: 12px; text-transform: uppercase;">Training Details</h3>
+                    <div style="background: #f5f5f5; padding: 16px; border-radius: 6px;">
+                        <p style="margin: 6px 0;"><strong>Mode:</strong> <span id="reviewMode"></span></p>
+                        <p style="margin: 6px 0;"><strong>Documents/Topics:</strong></p>
+                        <ul id="reviewDocuments" style="margin: 8px 0 0 20px;">
+                        </ul>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 24px;">
+                    <h3 style="font-size: 14px; font-weight: 600; color: #666; margin-bottom: 12px; text-transform: uppercase;">Attendees & Signatures</h3>
+                    <div id="reviewAttendees" style="background: #f5f5f5; padding: 16px; border-radius: 6px; max-height: 300px; overflow-y: auto;">
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 24px;">
+                    <h3 style="font-size: 14px; font-weight: 600; color: #666; margin-bottom: 12px; text-transform: uppercase;">Trainer Signature</h3>
+                    <div style="background: #f5f5f5; padding: 16px; border-radius: 6px;">
+                        <div id="reviewTrainerSigStatus" style="font-weight: 600; color: #4caf50; display: flex; align-items: center; gap: 8px;"></div>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 12px;">
+                    <button onclick="cancelReview()" style="flex: 1; padding: 12px; background: #e0e0e0; color: #333; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Back to Edit</button>
+                    <button onclick="finalSubmit()" style="flex: 1; padding: 12px; background: #0066cc; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Confirm & Submit</button>
+                </div>
+            </div>
+        </div>
+            <button class="btn btn-secondary" onclick="resetForm()">Reset Form</button>
+            <button class="btn btn-primary" onclick="showReview()" id="submitBtn">Review & Submit</button>
+        </div>
+    </div>
+
+    <script>
+        let firebaseConfig = null;
+        let db;
+        let siteData = {};
+        let selectedMode = 'role-based';
+        let selectedDocuments = [];
+        let selectedEmployees = [];
+        let employeeSignatures = {};
+        let trainerSignatureMode = 'draw';
+        let trainerHasSignature = false;
+
+        // SVG Icon Definitions
+        const svgIcons = {
+            checkmark: () => '<svg viewBox="0 0 24 24" style="width: 20px; height: 20px; stroke: #4caf50; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;"><path d="M8 12l3 3 5-6"/></svg>',
+        };
+        function loadFirebaseConfig() {
+            const stored = localStorage.getItem('firebaseConfig');
+            if (stored) {
+                try {
+                    firebaseConfig = JSON.parse(stored);
+                    return true;
+                } catch (e) {
+                    localStorage.removeItem('firebaseConfig');
+                }
+            }
+            return false;
+        }
+
+        // Show config modal
+        function showConfigModal() {
+            const modal = document.createElement('div');
+            modal.innerHTML = `
+                <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 10000;">
+                    <div style="background: white; padding: 40px; border-radius: 8px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto;">
+                        <h2 style="margin-bottom: 20px;">Firebase Configuration Required</h2>
+                        <p style="margin-bottom: 16px; color: #666; line-height: 1.6;">
+                            Paste your Firebase config from the Firebase Console:
+                            <br><br>
+                            1. Go to Firebase Console → dsv-training-compliance project<br>
+                            2. Click Settings (⚙️) → Project settings<br>
+                            3. Scroll to "Your apps" → Copy the firebaseConfig object<br>
+                            4. Paste it below (just the {...} part)
+                        </p>
+                        <textarea id="configInput" style="width: 100%; height: 200px; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-family: monospace; font-size: 12px; margin-bottom: 16px;" placeholder='{&#10;  "apiKey": "...",&#10;  "authDomain": "...",&#10;  ...&#10;}'></textarea>
+                        <div style="display: flex; gap: 12px;">
+                            <button onclick="saveFirebaseConfig()" style="flex: 1; padding: 12px; background: #0066cc; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Save Config</button>
+                            <button onclick="skipConfig()" style="flex: 1; padding: 12px; background: #e0e0e0; color: #333; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Try Demo</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        // Save Firebase config
+        function saveFirebaseConfig() {
+            const input = document.getElementById('configInput');
+            const text = input.value.trim();
+            
+            try {
+                firebaseConfig = JSON.parse(text);
+                localStorage.setItem('firebaseConfig', JSON.stringify(firebaseConfig));
+                document.body.querySelector('[style*="position: fixed"]').closest('div').remove();
+                initFirebase();
+            } catch (e) {
+                alert('Invalid JSON. Please paste the entire config object.');
+            }
+        }
+
+        // Skip config (demo mode)
+        function skipConfig() {
+            document.body.querySelector('[style*="position: fixed"]').closest('div').remove();
+            showToast('Demo mode: Firebase not configured. Signatures will not be saved.', 'error');
+        }
+
+        // Initialize Firebase
+        async function initFirebase() {
+            try {
+                if (!firebaseConfig) {
+                    showConfigModal();
+                    return;
+                }
+
+                firebase.initializeApp(firebaseConfig);
+                db = firebase.firestore();
+                
+                // Set today's date
+                const today = new Date().toISOString().split('T')[0];
+                document.getElementById('trainingDate').value = today;
+                
+                // Prevent backdating: set min date to today
+                document.getElementById('trainingDate').min = today;
+                
+                await loadSiteData();
+            } catch (error) {
+                console.error('Firebase init error:', error);
+                showToast('Error loading configuration', 'error');
+            }
+        }
+
+        // Load site data from Firestore
+        async function loadSiteData() {
+            try {
+                console.log('Attempting to load site data from Firestore...');
+                const doc = await db.collection('sites').doc('default-site').get();
+                
+                if (doc.exists) {
+                    siteData = doc.data();
+                    console.log('Site data loaded successfully:', siteData);
+                    populateTrainerRole();
+                    populateRoles();
+                    populateEmployees();
+                    showToast('Configuration loaded successfully', 'success');
+                } else {
+                    console.error('Site document does not exist at: sites/default-site');
+                    showToast('Site configuration not found. Check that setup was completed and data is in Firestore.', 'error');
+                }
+            } catch (error) {
+                console.error('Error loading site data:', error);
+                console.error('Error code:', error.code);
+                console.error('Error message:', error.message);
+                
+                let errorMsg = 'Error loading site configuration: ';
+                if (error.code === 'permission-denied') {
+                    errorMsg += 'Permission denied. Check Firestore security rules.';
+                } else if (error.code === 'not-found') {
+                    errorMsg += 'Site data not found in Firestore.';
+                } else {
+                    errorMsg += error.message;
+                }
+                
+                showToast(errorMsg, 'error');
+            }
+        }
+
+        // Populate trainer role dropdown
+        function populateTrainerRole() {
+            const select = document.getElementById('trainerRole');
+            const roles = siteData.roles || [];
+            select.innerHTML = '<option value="">Select role...</option>';
+            roles.forEach(role => {
+                const option = document.createElement('option');
+                option.value = role.name;
+                option.textContent = role.name;
+                select.appendChild(option);
+            });
+        }
+
+        // Populate role selector for role-based mode
+        function populateRoles() {
+            const select = document.getElementById('selectedRole');
+            const roles = siteData.roles || [];
+            select.innerHTML = '<option value="">Choose a role...</option>';
+            roles.forEach(role => {
+                const option = document.createElement('option');
+                option.value = role.name;
+                option.textContent = role.name;
+                select.appendChild(option);
+            });
+            
+            select.addEventListener('change', (e) => {
+                if (e.target.value) {
+                    displayRoleDocuments(e.target.value);
+                }
+            });
+        }
+
+        // Display documents for selected role
+        function displayRoleDocuments(roleName) {
+            const role = (siteData.roles || []).find(r => r.name === roleName);
+            const container = document.getElementById('roleDocumentsContainer');
+            
+            if (!role || !role.requiredDocs) {
+                container.innerHTML = '<p style="color: #999;">No documents assigned to this role</p>';
+                return;
+            }
+
+            const docsHtml = role.requiredDocs.map(doc => `
+                <div class="document-item">
+                    <input type="checkbox" id="doc-${doc.docId}" value="${doc.docId}" 
+                           data-name="${doc.docName}" 
+                           data-frequency="${doc.frequency}"
+                           onchange="updateSelectedDocuments()">
+                    <label for="doc-${doc.docId}">
+                        ${doc.docName}
+                        <span class="document-badge">${doc.frequency}</span>
+                    </label>
+                </div>
+            `).join('');
+
+            container.innerHTML = docsHtml ? `<div class="documents-list">${docsHtml}</div>` : '<p style="color: #999;">No documents found</p>';
+        }
+
+        // Display custom documents
+        function displayCustomDocuments() {
+            const container = document.getElementById('customDocumentsContainer');
+            const allDocs = siteData.documents || [];
+            
+            const docsHtml = allDocs.map(doc => `
+                <div class="document-item">
+                    <input type="checkbox" id="doc-${doc.id}" value="${doc.id}" 
+                           data-name="${doc.name}"
+                           onchange="updateSelectedDocuments()">
+                    <label for="doc-${doc.id}">
+                        ${doc.name}
+                        <span class="document-badge">${doc.category || 'Uncategorized'}</span>
+                    </label>
+                </div>
+            `).join('');
+
+            container.innerHTML = docsHtml ? `<div class="documents-list">${docsHtml}</div>` : '<p style="color: #999;">No documents found</p>';
+        }
+
+        // Populate employees
+        function populateEmployees() {
+            const container = document.getElementById('employeesContainer');
+            const employees = siteData.employees || [];
+            
+            const empHtml = employees.map(emp => `
+                <div class="employee-item">
+                    <input type="checkbox" id="emp-${emp.id}" value="${emp.id}" 
+                           data-name="${emp.name}"
+                           data-role="${emp.role}"
+                           onchange="updateSelectedEmployees()">
+                    <label for="emp-${emp.id}">
+                        ${emp.name} <span class="document-badge">${emp.role}</span>
+                    </label>
+                </div>
+            `).join('');
+
+            container.innerHTML = empHtml;
+        }
+
+        // Update selected documents
+        function updateSelectedDocuments() {
+            selectedDocuments = Array.from(document.querySelectorAll(
+                `${selectedMode === 'role-based' ? '#roleDocumentsContainer' : '#customDocumentsContainer'} input[type="checkbox"]:checked`
+            )).map(cb => ({
+                id: cb.value,
+                name: cb.dataset.name,
+                frequency: cb.dataset.frequency || 'Custom'
+            }));
+
+            renderSignInSheet();
+        }
+
+        // Update selected employees
+        function updateSelectedEmployees() {
+            selectedEmployees = Array.from(document.querySelectorAll(
+                '#employeesContainer input[type="checkbox"]:checked'
+            )).map(cb => ({
+                id: cb.value,
+                name: cb.dataset.name,
+                role: cb.dataset.role
+            }));
+
+            renderSignInSheet();
+        }
+
+        // Add custom topic
+        function addCustomTopic() {
+            const input = document.getElementById('customTopic');
+            const topic = input.value.trim();
+            
+            if (!topic) {
+                showToast('Please enter a topic', 'error');
+                return;
+            }
+
+            selectedDocuments.push({
+                id: `custom-${Date.now()}`,
+                name: topic,
+                frequency: 'Custom'
+            });
+
+            input.value = '';
+            renderSignInSheet();
+            showToast(`Added: ${topic}`, 'success');
+        }
+
+        // Render sign-in sheet
+        function renderSignInSheet() {
+            const sheet = document.getElementById('signinSheet');
+
+            if (selectedEmployees.length === 0 || selectedDocuments.length === 0) {
+                sheet.innerHTML = '<p style="color: #999; grid-column: 1 / -1;">Select employees and documents to display sign-in sheet</p>';
+                return;
+            }
+
+            sheet.innerHTML = selectedEmployees.map(emp => `
+                <div class="employee-card ${employeeSignatures[emp.id] ? 'has-signature' : ''}">
+                    <div class="employee-header">
+                        <div class="employee-name">${emp.name}</div>
+                        <div class="employee-role">${emp.role}</div>
+                    </div>
+                    <div class="signature-container">
+                        <div class="signature-mode-toggle">
+                            <button class="signature-mode-btn active" onclick="setSigMode('${emp.id}', 'draw')">Draw</button>
+                            <button class="signature-mode-btn" onclick="setSigMode('${emp.id}', 'type')">Type</button>
+                        </div>
+                        <canvas id="canvas-${emp.id}" class="emp-canvas" width="250" height="100"></canvas>
+                        <input type="text" id="typed-${emp.id}" class="signature-input hidden" placeholder="Type name">
+                        <div class="signature-actions">
+                            <button class="btn btn-secondary" onclick="clearSignature('${emp.id}')">Clear</button>
+                        </div>
+                        <div id="status-${emp.id}" class="signature-status empty">Not signed</div>
+                    </div>
+                </div>
+            `).join('');
+
+            // Initialize canvas for each employee
+            selectedEmployees.forEach(emp => {
+                initializeEmployeeCanvas(emp.id);
+            });
+        }
+
+        // Initialize employee signature canvas
+        function initializeEmployeeCanvas(empId) {
+            const canvas = document.getElementById(`canvas-${empId}`);
+            if (!canvas) return;
+
+            const ctx = canvas.getContext('2d');
+            let isDrawing = false;
+
+            // Set canvas resolution
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+
+            canvas.addEventListener('mousedown', (e) => {
+                isDrawing = true;
+                const [x, y] = getCanvasCoords(canvas, e);
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+            });
+
+            canvas.addEventListener('mousemove', (e) => {
+                if (!isDrawing) return;
+                const [x, y] = getCanvasCoords(canvas, e);
+                ctx.lineTo(x, y);
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 2;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.stroke();
+            });
+
+            canvas.addEventListener('mouseup', () => {
+                isDrawing = false;
+                updateEmployeeSignatureStatus(empId);
+            });
+
+            canvas.addEventListener('mouseleave', () => {
+                isDrawing = false;
+            });
+
+            // Touch support
+            canvas.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                isDrawing = true;
+                const [x, y] = getTouchCoords(canvas, e);
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+            });
+
+            canvas.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                if (!isDrawing) return;
+                const [x, y] = getTouchCoords(canvas, e);
+                ctx.lineTo(x, y);
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 2;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.stroke();
+            });
+
+            canvas.addEventListener('touchend', () => {
+                isDrawing = false;
+                updateEmployeeSignatureStatus(empId);
+            });
+        }
+
+        // Get canvas coordinates for mouse
+        function getCanvasCoords(canvas, e) {
+            const rect = canvas.getBoundingClientRect();
+            return [e.clientX - rect.left, e.clientY - rect.top];
+        }
+
+        // Get canvas coordinates for touch
+        function getTouchCoords(canvas, e) {
+            const rect = canvas.getBoundingClientRect();
+            const touch = e.touches[0];
+            return [touch.clientX - rect.left, touch.clientY - rect.top];
+        }
+
+        // Set signature mode for employee
+        function setSigMode(empId, mode) {
+            const card = document.querySelector(`#canvas-${empId}`).closest('.employee-card');
+            const canvas = card.querySelector(`canvas`);
+            const input = card.querySelector(`input[type="text"].signature-input`);
+            const buttons = card.querySelectorAll('.signature-mode-btn');
+
+            if (mode === 'draw') {
+                canvas.classList.remove('hidden');
+                input.classList.add('hidden');
+                buttons.forEach(btn => btn.classList.remove('active'));
+                buttons[0]?.classList.add('active');
+            } else {
+                canvas.classList.add('hidden');
+                input.classList.remove('hidden');
+                buttons.forEach(btn => btn.classList.remove('active'));
+                buttons[1]?.classList.add('active');
+                input.focus();
+            }
+            
+            updateEmployeeSignatureStatus(empId);
+        }
+
+        // Update employee signature status
+        function updateEmployeeSignatureStatus(empId) {
+            const canvas = document.getElementById(`canvas-${empId}`);
+            const typed = document.getElementById(`typed-${empId}`);
+            const status = document.getElementById(`status-${empId}`);
+            const card = canvas.closest('.employee-card');
+
+            const hasCanvasSig = canvas.offsetParent !== null && isCanvasEmpty(canvas) === false;
+            const hasTypedSig = typed.offsetParent !== null && typed.value.trim().length > 0;
+
+            if (hasCanvasSig || hasTypedSig) {
+                employeeSignatures[empId] = true;
+                status.innerHTML = svgIcons.checkmark() + ' <span>Signed</span>';
+                status.classList.remove('empty');
+                status.classList.add('signed');
+                card?.classList.add('has-signature');
+            } else {
+                delete employeeSignatures[empId];
+                status.textContent = 'Not signed';
+                status.classList.remove('signed');
+                status.classList.add('empty');
+                card?.classList.remove('has-signature');
+            }
+        }
+
+        // Check if canvas is empty
+        function isCanvasEmpty(canvas) {
+            const ctx = canvas.getContext('2d');
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            return imageData.data.every(val => val === 0 || val === 255);
+        }
+
+        // Clear signature
+        function clearSignature(empId) {
+            const canvas = document.getElementById(`canvas-${empId}`);
+            const input = document.getElementById(`typed-${empId}`);
+            
+            canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+            input.value = '';
+            
+            delete employeeSignatures[empId];
+            updateEmployeeSignatureStatus(empId);
+        }
+
+        // Trainer signature handlers
+        function initializeTrainerCanvas() {
+            const canvas = document.getElementById('trainerCanvas');
+            const ctx = canvas.getContext('2d');
+            let isDrawing = false;
+
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+
+            canvas.addEventListener('mousedown', (e) => {
+                isDrawing = true;
+                const [x, y] = getCanvasCoords(canvas, e);
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+            });
+
+            canvas.addEventListener('mousemove', (e) => {
+                if (!isDrawing) return;
+                const [x, y] = getCanvasCoords(canvas, e);
+                ctx.lineTo(x, y);
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 2.5;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.stroke();
+            });
+
+            canvas.addEventListener('mouseup', () => {
+                isDrawing = false;
+                updateTrainerSignatureStatus();
+            });
+
+            canvas.addEventListener('mouseleave', () => {
+                isDrawing = false;
+            });
+
+            // Touch support
+            canvas.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                isDrawing = true;
+                const [x, y] = getTouchCoords(canvas, e);
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+            });
+
+            canvas.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                if (!isDrawing) return;
+                const [x, y] = getTouchCoords(canvas, e);
+                ctx.lineTo(x, y);
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 2.5;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.stroke();
+            });
+
+            canvas.addEventListener('touchend', () => {
+                isDrawing = false;
+                updateTrainerSignatureStatus();
+            });
+        }
+
+        // Set trainer signature mode
+        function setTrainerSigMode(mode) {
+            const canvas = document.getElementById('trainerCanvas');
+            const input = document.getElementById('trainerTypedName');
+            const buttons = document.querySelectorAll('.trainer-sig-mode-btn');
+
+            trainerSignatureMode = mode;
+
+            if (mode === 'draw') {
+                canvas.classList.remove('hidden');
+                input.classList.add('hidden');
+                buttons.forEach(btn => btn.classList.remove('active'));
+                buttons[0]?.classList.add('active');
+            } else {
+                canvas.classList.add('hidden');
+                input.classList.remove('hidden');
+                buttons.forEach(btn => btn.classList.remove('active'));
+                buttons[1]?.classList.add('active');
+                input.focus();
+            }
+        }
+
+        // Update trainer signature status
+        function updateTrainerSignatureStatus() {
+            const canvas = document.getElementById('trainerCanvas');
+            const input = document.getElementById('trainerTypedName');
+            const status = document.getElementById('trainerSigStatus');
+
+            const hasCanvasSig = trainerSignatureMode === 'draw' && !isCanvasEmpty(canvas);
+            const hasTypedSig = trainerSignatureMode === 'type' && input.value.trim().length > 0;
+
+            if (hasCanvasSig || hasTypedSig) {
+                trainerHasSignature = true;
+                status.innerHTML = svgIcons.checkmark() + ' <span>Signed</span>';
+                status.classList.remove('empty');
+                status.classList.add('signed');
+            } else {
+                trainerHasSignature = false;
+                status.textContent = 'Signature required';
+                status.classList.remove('signed');
+                status.classList.add('empty');
+            }
+        }
+
+        // Clear trainer signature
+        function clearTrainerSignature() {
+            const canvas = document.getElementById('trainerCanvas');
+            const input = document.getElementById('trainerTypedName');
+
+            canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+            input.value = '';
+
+            trainerHasSignature = false;
+            updateTrainerSignatureStatus();
+        }
+
+        // Mode switching
+        document.querySelectorAll('.mode-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                selectedMode = btn.dataset.mode;
+
+                document.querySelectorAll('.mode-content').forEach(content => content.classList.add('hidden'));
+                if (selectedMode === 'role-based') {
+                    document.getElementById('roleBasedMode').classList.remove('hidden');
+                } else {
+                    document.getElementById('customMode').classList.remove('hidden');
+                    displayCustomDocuments();
+                }
+
+                selectedDocuments = [];
+                renderSignInSheet();
+            });
+        });
+
+        // Trainer signature mode switching
+        document.querySelectorAll('.trainer-sig-mode-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                setTrainerSigMode(btn.dataset.sigMode);
+            });
+        });
+
+        // Track typed trainer name
+        document.getElementById('trainerTypedName').addEventListener('input', () => {
+            updateTrainerSignatureStatus();
+        });
+
+        // Track typed employee names
+        document.addEventListener('change', (e) => {
+            if (e.target.classList.contains('signature-input')) {
+                const empId = e.target.id.replace('typed-', '');
+                updateEmployeeSignatureStatus(empId);
+            }
+        });
+
+        // Get canvas data
+        function getCanvasImageData(canvas) {
+            return canvas.toDataURL('image/png');
+        }
+
+        // Show review screen
+        function showReview() {
+            // Validation
+            if (!document.getElementById('trainerName').value.trim()) {
+                showToast('Please enter trainer name', 'error');
+                return;
+            }
+
+            if (!document.getElementById('trainerRole').value) {
+                showToast('Please select trainer role', 'error');
+                return;
+            }
+
+            if (selectedDocuments.length === 0) {
+                showToast('Please select at least one document/topic', 'error');
+                return;
+            }
+
+            if (selectedEmployees.length === 0) {
+                showToast('Please select at least one employee', 'error');
+                return;
+            }
+
+            if (!trainerHasSignature) {
+                showToast('Trainer signature is required', 'error');
+                return;
+            }
+
+            // Populate review screen
+            document.getElementById('reviewTrainerName').textContent = document.getElementById('trainerName').value;
+            document.getElementById('reviewTrainerRole').textContent = document.getElementById('trainerRole').value;
+            document.getElementById('reviewTrainingDate').textContent = document.getElementById('trainingDate').value;
+            document.getElementById('reviewMode').textContent = selectedMode === 'role-based' ? 'Role-Based Training' : 'Custom / Incident Training';
+            document.getElementById('reviewTrainerSigStatus').innerHTML = svgIcons.checkmark() + '<span>Signed</span>';
+
+            // Documents
+            const docList = document.getElementById('reviewDocuments');
+            docList.innerHTML = selectedDocuments.map(doc => `
+                <li style="margin: 4px 0;">${doc.name} <span style="font-size: 12px; color: #666;">(${doc.frequency})</span></li>
+            `).join('');
+
+            // Attendees
+            const attendeesList = document.getElementById('reviewAttendees');
+            attendeesList.innerHTML = selectedEmployees.map(emp => `
+                <div style="padding: 10px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <strong>${emp.name}</strong>
+                        <div style="font-size: 12px; color: #666;">${emp.role}</div>
+                    </div>
+                    <div style="${employeeSignatures[emp.id] ? 'color: #4caf50; font-weight: 600; display: flex; align-items: center; gap: 6px;' : 'color: #ff9800; font-weight: 600;'}">
+                        ${employeeSignatures[emp.id] ? svgIcons.checkmark() + '<span>Signed</span>' : 'Not signed'}
+                    </div>
+                </div>
+            `).join('');
+
+            // Show review modal
+            document.getElementById('reviewScreen').classList.remove('hidden');
+        }
+
+        // Cancel review and go back to edit
+        function cancelReview() {
+            document.getElementById('reviewScreen').classList.add('hidden');
+        }
+
+        // Final submit after review confirmation
+        async function finalSubmit() {
+            try {
+                document.getElementById('submitBtn').disabled = true;
+
+                // Build session data
+                const session = {
+                    id: `session-${Date.now()}`,
+                    timestamp: new Date().toISOString(),
+                    trainer: {
+                        name: document.getElementById('trainerName').value,
+                        role: document.getElementById('trainerRole').value
+                    },
+                    date: document.getElementById('trainingDate').value,
+                    mode: selectedMode,
+                    documents: selectedDocuments,
+                    employees: selectedEmployees.map(emp => ({
+                        ...emp,
+                        hasSigned: !!employeeSignatures[emp.id]
+                    })),
+                    signatures: {}
+                };
+
+                // Collect employee signatures
+                selectedEmployees.forEach(emp => {
+                    const canvas = document.getElementById(`canvas-${emp.id}`);
+                    const input = document.getElementById(`typed-${emp.id}`);
+                    
+                    if (canvas.offsetParent !== null) {
+                        session.signatures[emp.id] = {
+                            type: 'draw',
+                            data: getCanvasImageData(canvas)
+                        };
+                    } else if (input.value.trim()) {
+                        session.signatures[emp.id] = {
+                            type: 'type',
+                            value: input.value.trim()
+                        };
+                    }
+                });
+
+                // Trainer signature
+                const trainerCanvas = document.getElementById('trainerCanvas');
+                const trainerInput = document.getElementById('trainerTypedName');
+
+                if (trainerSignatureMode === 'draw') {
+                    session.trainerSignature = {
+                        type: 'draw',
+                        data: getCanvasImageData(trainerCanvas)
+                    };
+                } else {
+                    session.trainerSignature = {
+                        type: 'type',
+                        value: trainerInput.value.trim()
+                    };
+                }
+
+                // Save to Firestore
+                await db.collection('sites').doc('default-site')
+                    .collection('trainingSessions').doc(session.id)
+                    .set(session);
+
+                document.getElementById('reviewScreen').classList.add('hidden');
+                showToast('Training session submitted successfully!', 'success');
+                
+                // Auto-generate PDF
+                setTimeout(() => {
+                    downloadSessionPDF(session.id);
+                }, 500);
+                
+                setTimeout(() => resetForm(), 2500);
+            } catch (error) {
+                console.error('Error submitting session:', error);
+                showToast('Error submitting training session', 'error');
+                document.getElementById('submitBtn').disabled = false;
+            }
+        }
+
+        // Submit training session (OLD - now using finalSubmit)
+        async function submitTrainingSession() {
+            // This function is now replaced by showReview() -> finalSubmit()
+        }
+
+        // Reset form
+        function resetForm() {
+            document.getElementById('trainerName').value = '';
+            document.getElementById('trainerRole').value = '';
+            document.getElementById('selectedRole').value = '';
+            document.getElementById('customTopic').value = '';
+
+            document.querySelectorAll('#employeesContainer input[type="checkbox"]').forEach(cb => cb.checked = false);
+            document.querySelectorAll('.mode-content input[type="checkbox"]').forEach(cb => cb.checked = false);
+
+            selectedDocuments = [];
+            selectedEmployees = [];
+            employeeSignatures = {};
+            trainerHasSignature = false;
+
+            clearTrainerSignature();
+            renderSignInSheet();
+
+            document.getElementById('roleDocumentsContainer').innerHTML = '';
+            document.getElementById('customDocumentsContainer').innerHTML = '';
+
+            showToast('Form reset', 'success');
+        }
+
+        // Show toast notification
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => toast.remove(), 4000);
+        }
+
+        // Toggle records view
+        function toggleRecordsView() {
+            document.getElementById('recordsScreen').classList.remove('hidden');
+            loadTrainingRecords();
+        }
+
+        // Close records view
+        function closeRecordsView() {
+            document.getElementById('recordsScreen').classList.add('hidden');
+        }
+
+        // Load training records from Firestore
+        async function loadTrainingRecords() {
+            try {
+                const search = document.getElementById('recordsSearchInput').value.toLowerCase();
+                const recordsList = document.getElementById('recordsList');
+                recordsList.innerHTML = '<p style="padding: 20px; color: #999; text-align: center;">Loading...</p>';
+
+                const snapshot = await db.collection('sites').doc('default-site')
+                    .collection('trainingSessions').orderBy('timestamp', 'desc').limit(50).get();
+
+                const records = [];
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    records.push({id: doc.id, ...data});
+                });
+
+                // Filter by search term
+                const filtered = records.filter(record => {
+                    const trainerName = record.trainer?.name?.toLowerCase() || '';
+                    const employees = (record.employees || []).map(e => e.name?.toLowerCase()).join(' ');
+                    return trainerName.includes(search) || employees.includes(search);
+                });
+
+                if (filtered.length === 0) {
+                    recordsList.innerHTML = '<p style="padding: 20px; color: #999; text-align: center;">No records found</p>';
+                    return;
+                }
+
+                recordsList.innerHTML = filtered.map(record => `
+                    <div style="padding: 16px; border-bottom: 1px solid #eee; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='#f9f9f9'" onmouseout="this.style.background='white'" onclick="viewSessionDetail('${record.id}')">
+                        <div style="display: flex; justify-content: space-between; align-items: start;">
+                            <div>
+                                <strong style="font-size: 15px;">${record.trainer?.name || 'Unknown'}</strong>
+                                <div style="font-size: 13px; color: #666; margin-top: 4px;">
+                                    ${record.trainer?.role || ''} • ${record.date || ''}
+                                </div>
+                                <div style="font-size: 12px; color: #999; margin-top: 4px;">
+                                    ${(record.employees || []).length} attendee(s) • ${(record.documents || []).length} document(s)
+                                </div>
+                            </div>
+                            <button class="btn btn-secondary" style="font-size: 12px; padding: 6px 12px;" onclick="event.stopPropagation(); downloadSessionPDF('${record.id}')">Download PDF</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading records:', error);
+                document.getElementById('recordsList').innerHTML = '<p style="padding: 20px; color: #ff6b6b;">Error loading records</p>';
+            }
+        }
+
+        // View session detail with signatures
+        async function viewSessionDetail(sessionId) {
+            try {
+                const doc = await db.collection('sites').doc('default-site')
+                    .collection('trainingSessions').doc(sessionId).get();
+
+                if (!doc.exists) {
+                    showToast('Session not found', 'error');
+                    return;
+                }
+
+                const session = doc.data();
+                const modal = document.createElement('div');
+                modal.innerHTML = `
+                    <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 10000;">
+                        <div style="background: white; border-radius: 8px; padding: 40px; max-width: 800px; width: 95%; max-height: 90vh; overflow-y: auto;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                                <h2 style="margin: 0;">Training Session Detail</h2>
+                                <button onclick="this.closest('[style*=\"position: fixed\"]').remove()" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
+                            </div>
+
+                            <div style="margin-bottom: 24px;">
+                                <h3 style="font-size: 14px; font-weight: 600; margin-bottom: 12px;">Trainer Info</h3>
+                                <div style="background: #f5f5f5; padding: 12px; border-radius: 6px;">
+                                    <p style="margin: 4px 0;"><strong>${session.trainer?.name || 'Unknown'}</strong></p>
+                                    <p style="margin: 4px 0; font-size: 13px; color: #666;">${session.trainer?.role || ''} • ${session.date || ''}</p>
+                                </div>
+                            </div>
+
+                            <div style="margin-bottom: 24px;">
+                                <h3 style="font-size: 14px; font-weight: 600; margin-bottom: 12px;">Documents</h3>
+                                <div style="background: #f5f5f5; padding: 12px; border-radius: 6px;">
+                                    ${(session.documents || []).map(doc => `<p style="margin: 4px 0; font-size: 13px;">${doc.name}</p>`).join('')}
+                                </div>
+                            </div>
+
+                            <div style="margin-bottom: 24px;">
+                                <h3 style="font-size: 14px; font-weight: 600; margin-bottom: 12px;">Attendee Signatures</h3>
+                                ${(session.employees || []).map(emp => `
+                                    <div style="margin-bottom: 16px; border: 1px solid #ddd; padding: 12px; border-radius: 6px;">
+                                        <p style="margin: 0 0 12px 0; font-weight: 600;">${emp.name} <span style="font-weight: normal; color: #666;">(${emp.role})</span></p>
+                                        ${session.signatures?.[emp.id]?.type === 'draw' ? `
+                                            <img src="${session.signatures[emp.id].data}" style="max-width: 100%; max-height: 150px; border: 1px solid #eee; border-radius: 4px;">
+                                        ` : `
+                                            <div style="font-family: 'Brush Script MT', cursive; font-size: 24px; color: #333; padding: 12px; background: white; border: 1px solid #eee; border-radius: 4px; letter-spacing: 2px;">
+                                                ${session.signatures?.[emp.id]?.value || '(Not signed)'}
+                                            </div>
+                                        `}
+                                    </div>
+                                `).join('')}
+                            </div>
+
+                            <div style="display: flex; gap: 12px;">
+                                <button class="btn btn-primary" onclick="downloadSessionPDF('${sessionId}'); this.closest('[style*=\"position: fixed\"]').remove();">Download PDF</button>
+                                <button class="btn btn-secondary" onclick="this.closest('[style*=\"position: fixed\"]').remove();">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+            } catch (error) {
+                console.error('Error viewing session:', error);
+                showToast('Error loading session details', 'error');
+            }
+        }
+
+        // Download session as PDF
+        async function downloadSessionPDF(sessionId) {
+            try {
+                const doc = await db.collection('sites').doc('default-site')
+                    .collection('trainingSessions').doc(sessionId).get();
+
+                if (!doc.exists) {
+                    showToast('Session not found', 'error');
+                    return;
+                }
+
+                const session = doc.data();
+                showToast('Generating PDF...', 'info');
+
+                // Create a temporary div with the content
+                const pdfDiv = document.createElement('div');
+                pdfDiv.style.position = 'absolute';
+                pdfDiv.style.left = '-9999px';
+                pdfDiv.style.top = '-9999px';
+                pdfDiv.style.width = '800px';
+                pdfDiv.style.backgroundColor = 'white';
+                pdfDiv.style.padding = '40px';
+                pdfDiv.style.fontFamily = 'Arial, sans-serif';
+                pdfDiv.style.color = '#333';
+                pdfDiv.style.lineHeight = '1.6';
+
+                let content = `
+                    <h1 style="text-align: center; margin-bottom: 30px; font-size: 24px;">Training Session Record</h1>
+                    
+                    <h2 style="border-bottom: 2px solid #0066cc; padding-bottom: 10px; margin-top: 30px;">Trainer Information</h2>
+                    <p><strong>Trainer Name:</strong> ${session.trainer?.name || 'Unknown'}</p>
+                    <p><strong>Trainer Role:</strong> ${session.trainer?.role || ''}</p>
+                    <p><strong>Training Date:</strong> ${session.date || ''}</p>
+                    <p><strong>Session ID:</strong> ${session.id || ''}</p>
+
+                    <h2 style="border-bottom: 2px solid #0066cc; padding-bottom: 10px; margin-top: 30px;">Training Details</h2>
+                    <p><strong>Mode:</strong> ${session.mode === 'role-based' ? 'Role-Based Training' : 'Custom / Incident Training'}</p>
+                    <p><strong>Documents/Topics Covered:</strong></p>
+                    <ul>
+                        ${(session.documents || []).map(doc => `<li>${doc.name} (${doc.frequency})</li>`).join('')}
+                    </ul>
+
+                    <h2 style="border-bottom: 2px solid #0066cc; padding-bottom: 10px; margin-top: 30px;">Attendee Signatures</h2>
+                `;
+
+                // Add employee signatures
+                (session.employees || []).forEach(emp => {
+                    content += `<div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee;">
+                        <p><strong>${emp.name}</strong> (${emp.role})</p>`;
+                    
+                    if (session.signatures?.[emp.id]?.type === 'draw' && session.signatures[emp.id].data) {
+                        content += `<img src="${session.signatures[emp.id].data}" style="max-width: 100%; max-height: 120px; border: 1px solid #ddd; padding: 4px; margin-top: 8px;" />`;
+                    } else if (session.signatures?.[emp.id]?.value) {
+                        content += `<div style="font-family: cursive; font-size: 20px; padding: 10px; border: 1px solid #ddd; margin-top: 8px; letter-spacing: 1px;">${session.signatures[emp.id].value}</div>`;
+                    } else {
+                        content += `<p style="color: #999; margin-top: 8px;">(Not signed)</p>`;
+                    }
+                    content += `</div>`;
+                });
+
+                content += `
+                    <div style="margin-top: 40px; border-top: 2px solid #ccc; padding-top: 20px;">
+                        <h2 style="border-bottom: 2px solid #0066cc; padding-bottom: 10px;">Trainer Sign-Off</h2>
+                `;
+
+                if (session.trainerSignature?.type === 'draw' && session.trainerSignature.data) {
+                    content += `<img src="${session.trainerSignature.data}" style="max-width: 100%; max-height: 120px; border: 1px solid #ddd; padding: 4px; margin-top: 8px;" />`;
+                } else if (session.trainerSignature?.value) {
+                    content += `<div style="font-family: cursive; font-size: 20px; padding: 10px; border: 1px solid #ddd; margin-top: 8px; letter-spacing: 1px;">${session.trainerSignature.value}</div>`;
+                } else {
+                    content += `<p style="color: #999;">(Not signed)</p>`;
+                }
+
+                content += `
+                    </div>
+                    <div style="margin-top: 40px; text-align: center; font-size: 11px; color: #999; border-top: 1px solid #ccc; padding-top: 20px;">
+                        <p>Generated: ${new Date().toLocaleString()}</p>
+                        <p>This is an official training record. Keep for compliance documentation.</p>
+                    </div>
+                `;
+
+                pdfDiv.innerHTML = content;
+                document.body.appendChild(pdfDiv);
+
+                // Convert to canvas and then to PDF
+                const canvas = await html2canvas(pdfDiv, {
+                    scale: 2,
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: '#ffffff'
+                });
+
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF({
+                    orientation: 'portrait',
+                    unit: 'mm',
+                    format: 'a4'
+                });
+
+                const imgData = canvas.toDataURL('image/png');
+                const imgWidth = 210;
+                const pageHeight = 295;
+                let imgHeight = (canvas.height * imgWidth) / canvas.width;
+                let heightLeft = imgHeight;
+                let position = 0;
+
+                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
+
+                while (heightLeft >= 0) {
+                    position = heightLeft - imgHeight;
+                    pdf.addPage();
+                    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                    heightLeft -= pageHeight;
+                }
+
+                const filename = `training-session-${session.date}-${session.trainer?.name?.replace(/\s+/g, '-') || 'unknown'}.pdf`;
+                pdf.save(filename);
+
+                document.body.removeChild(pdfDiv);
+                showToast('PDF downloaded successfully', 'success');
+
+            } catch (error) {
+                console.error('Error generating PDF:', error);
+                showToast('Error generating PDF: ' + error.message, 'error');
+            }
+        }
+
+        // Initialize on load
+        window.addEventListener('load', () => {
+            if (!loadFirebaseConfig()) {
+                showConfigModal();
+            } else {
+                initFirebase();
+            }
+            initializeTrainerCanvas();
+            setTrainerSigMode('draw');
+        });
+    </script>
+</body>
+</html>
