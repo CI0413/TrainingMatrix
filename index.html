@@ -1110,13 +1110,13 @@
             tbody.innerHTML = page.map(emp => {
                 const docCells = emp.requiredDocs.slice(0, 1).map(doc => {
                     const status = emp.docStatus[doc.docId] || { status: 'not-started' };
-                    const svgIcons = {
+                    const statusSvgs = {
                         'completed': svgIcons.completed(),
                         'due-soon': svgIcons.dueSoon(),
                         'overdue': svgIcons.overdue(),
                         'not-started': svgIcons.notStarted()
                     };
-                    return `<td><div class="status-icon ${status.status}">${svgIcons[status.status]}</div></td>`;
+                    return `<td><div class="status-icon ${status.status}">${statusSvgs[status.status]}</div></td>`;
                 }).join('');
 
                 const statusBadge = emp.overallStatus === 'completed' ? 'badge-on-track' : 'badge-needs-attention';
