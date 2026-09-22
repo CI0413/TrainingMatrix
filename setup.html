@@ -876,15 +876,37 @@
 
         <!-- RIGHT SIDEBAR -->
         <div class="sidebar-panel">
+          <!-- Legend -->
           <div class="panel-card">
-            <div class="panel-title">⚡ Quick Actions</div>
-            <button class="quick-action-btn primary" onclick="switchScreen('training')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline; margin-right: 8px;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm3.5-9h-3V8.5h-1v3h-3v1h3v3h1v-3h3v-1z"/></svg>Record Training</button>
-            <button class="quick-action-btn" onclick="switchScreen('setup')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="display:inline; margin-right: 8px;"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>Configure Site</button>
+            <div class="panel-title">Training Status Legend</div>
+            <div class="legend-item"><div class="legend-icon completed"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M8 12l3 3 5-6"/><circle cx="12" cy="12" r="10"/></svg></div><span>Completed</span></div>
+            <div class="legend-item"><div class="legend-icon due-soon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l3 2"/></svg></div><span>Due Soon (≤ 30 days)</span></div>
+            <div class="legend-item"><div class="legend-icon overdue"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M15 9L9 15M9 9l6 6"/><circle cx="12" cy="12" r="10"/></svg></div><span>Overdue (> 30 days)</span></div>
+            <div class="legend-item"><div class="legend-icon not-started"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3" fill="white"/></svg></div><span>Not Started</span></div>
           </div>
 
+          <!-- Quick Filters -->
           <div class="panel-card">
-            <div class="panel-title">ℹ️ System Status</div>
-            <div class="help-text">Track employee training across your site. All data is shared in real-time across devices.</div>
+            <div class="panel-title">Quick Filters</div>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+              <label style="display: flex; align-items: center; gap: 8px; font-size: 12px;"><input type="checkbox" /> Show only overdue</label>
+              <label style="display: flex; align-items: center; gap: 8px; font-size: 12px;"><input type="checkbox" /> Show only due soon</label>
+              <label style="display: flex; align-items: center; gap: 8px; font-size: 12px;"><input type="checkbox" /> Show only not started</label>
+            </div>
+          </div>
+
+          <!-- Quick Actions -->
+          <div class="panel-card">
+            <div class="panel-title">Quick Actions</div>
+            <button class="quick-action-btn primary" onclick="switchScreen('training')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="display:inline; margin-right: 8px;"><circle cx="12" cy="8" r="4"/><path d="M12 15c-4 0-7 2-7 5v2h14v-2c0-3-3-5-7-5z"/></svg>Assign Training</button>
+            <button class="quick-action-btn" onclick="alert('Reports coming soon')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="display:inline; margin-right: 8px;"><path d="M5 4h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/><line x1="8" y1="9" x2="8" y2="16"/><line x1="12" y1="9" x2="12" y2="14"/><line x1="16" y1="9" x2="16" y2="12"/></svg>View Reports</button>
+            <button class="quick-action-btn" onclick="alert('Export coming soon')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="display:inline; margin-right: 8px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M12 15l3-3 3 3M12 12v6"/></svg>Export Matrix</button>
+          </div>
+
+          <!-- Help Section -->
+          <div class="panel-card" style="background: #e3f2fd; border-left: 4px solid #0066cc;">
+            <div class="panel-title" style="color: #0066cc; display: flex; align-items: center; gap: 8px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="#0066cc"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>Keep your team ready</div>
+            <div class="help-text" style="color: #1565c0; font-size: 12px;">Stay on top of training requirements to ensure safety, compliance, and smooth operations.</div>
           </div>
         </div>
       </div>
