@@ -1,0 +1,1400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Training Matrix - DSV</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+      background: #f0f4f8;
+      color: #2c3e50;
+    }
+
+    .main-layout {
+      display: grid;
+      grid-template-columns: 200px 1fr;
+      grid-template-rows: 60px 1fr;
+      height: 100vh;
+      width: 100%;
+    }
+
+    /* SIDEBAR */
+    .sidebar {
+      grid-row: 1 / -1;
+      grid-column: 1;
+      background: #0f3460;
+      color: white;
+      padding: 20px 0;
+      overflow-y: auto;
+      z-index: 200;
+    }
+
+    .sidebar-logo {
+      padding: 20px;
+      font-size: 18px;
+      font-weight: 700;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      margin-bottom: 20px;
+    }
+
+    .sidebar-nav {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .nav-item {
+      padding: 14px 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 14px;
+      transition: all 0.3s;
+      border-left: 3px solid transparent;
+      margin: 0 8px;
+      border-radius: 4px;
+      color: rgba(255,255,255,0.7);
+    }
+
+    .nav-item:hover {
+      background: rgba(255,255,255,0.1);
+      color: white;
+    }
+
+    .nav-item.active {
+      background: rgba(74, 144, 226, 0.2);
+      border-left-color: #4a90e2;
+      color: #4a90e2;
+    }
+
+    .nav-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+    }
+
+    .nav-icon svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    .sidebar-footer {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      right: 20px;
+      font-size: 12px;
+      color: rgba(255,255,255,0.6);
+      line-height: 1.5;
+    }
+
+    /* TOP BAR */
+    .topbar {
+      grid-row: 1;
+      grid-column: 2;
+      background: white;
+      border-bottom: 1px solid #e0e6ed;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 30px;
+      z-index: 100;
+    }
+
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 30px;
+      font-size: 13px;
+    }
+
+    .topbar-left a {
+      color: #2c3e50;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .site-selector,
+    .user-profile {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      background: #f5f7fa;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    /* MAIN CONTENT AREA */
+    .content-area {
+      grid-row: 2;
+      grid-column: 2;
+      display: flex;
+      overflow: hidden;
+      gap: 30px;
+      padding: 30px;
+      background: #f0f4f8;
+    }
+
+    .content-main {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar-panel {
+      width: 280px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      overflow-y: auto;
+    }
+
+    .screen {
+      display: none;
+      width: 100%;
+    }
+
+    .screen.active {
+      display: flex;
+      width: 100%;
+    }
+
+    /* Dashboard screen specific */
+    #dashboardScreen {
+      gap: 30px;
+    }
+
+    /* PAGE STYLES */
+    .page-header {
+      margin-bottom: 24px;
+    }
+
+    .page-title {
+      font-size: 24px;
+      font-weight: 700;
+      color: #0f3460;
+      margin-bottom: 4px;
+    }
+
+    .page-subtitle {
+      font-size: 13px;
+      color: #7f8c8d;
+    }
+
+    .stat-cards {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+
+    .stat-card-icon {
+      margin-bottom: 12px;
+    }
+
+    .stat-card-label {
+      font-size: 12px;
+      color: #7f8c8d;
+      margin-bottom: 8px;
+    }
+
+    .stat-card-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: #0f3460;
+      margin-bottom: 4px;
+    }
+
+    .stat-card-detail {
+      font-size: 11px;
+      color: #95a5a6;
+    }
+
+    .stat-card-progress {
+      height: 4px;
+      background: #ecf0f1;
+      border-radius: 2px;
+      margin-top: 12px;
+      overflow: hidden;
+    }
+
+    .stat-card-progress-fill {
+      height: 100%;
+      background: #4a90e2;
+      border-radius: 2px;
+    }
+
+    .filter-bar {
+      background: white;
+      border-radius: 8px;
+      padding: 16px;
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr auto;
+      gap: 16px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      align-items: end;
+    }
+
+    .search-box {
+      padding: 10px 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 13px;
+    }
+
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .filter-group label {
+      font-size: 12px;
+      color: #7f8c8d;
+      font-weight: 500;
+    }
+
+    .filter-group select {
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 13px;
+    }
+
+    .reset-btn {
+      padding: 8px 16px;
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .legend-bar {
+      background: white;
+      border-radius: 8px;
+      padding: 16px;
+      display: flex;
+      gap: 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      align-items: center;
+      font-size: 12px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .legend-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+    }
+
+    .legend-icon.completed {
+      background: #34A853;
+    }
+
+    .legend-icon.due-soon {
+      background: #FBBC04;
+    }
+
+    .legend-icon.overdue {
+      background: #EA4335;
+    }
+
+    .legend-icon.not-started {
+      background: #bbb;
+    }
+
+    .table-container {
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      margin-bottom: 16px;
+    }
+
+    .table-body {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    thead {
+      background: #f9f9f9;
+      border-bottom: 2px solid #e0e0e0;
+    }
+
+    th {
+      padding: 12px 16px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 12px;
+      color: #0f3460;
+    }
+
+    td {
+      padding: 12px 16px;
+      border-bottom: 1px solid #e0e0e0;
+      font-size: 13px;
+    }
+
+    tbody tr:hover {
+      background: #f9f9f9;
+    }
+
+    .employee-cell {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .employee-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #4a90e2;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .training-status {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      margin: 0 auto;
+    }
+
+    .training-status.completed {
+      background: #34A853;
+    }
+
+    .training-status.due-soon {
+      background: #FBBC04;
+    }
+
+    .training-status.overdue {
+      background: #EA4335;
+    }
+
+    .training-status.not-started {
+      background: #ccc;
+    }
+
+    .overall-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .progress-ring {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      color: white;
+      font-size: 12px;
+    }
+
+    .progress-ring.on-track {
+      background: #34A853;
+    }
+
+    .progress-ring.needs-attention {
+      background: #EA4335;
+    }
+
+    .status-badge {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 3px;
+      text-align: center;
+    }
+
+    .status-badge.on-track {
+      background: #c8e6c9;
+      color: #1b5e20;
+    }
+
+    .status-badge.needs-attention {
+      background: #ffcdd2;
+      color: #b71c1c;
+    }
+
+    .next-due {
+      font-size: 12px;
+      color: #555;
+    }
+
+    .next-due.overdue {
+      color: #EA4335;
+      font-weight: 600;
+    }
+
+    .pagination {
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-top: 1px solid #e0e0e0;
+      background: white;
+      border-radius: 0 0 8px 8px;
+      font-size: 12px;
+    }
+
+    .pagination button {
+      padding: 6px 10px;
+      border: 1px solid #ddd;
+      background: white;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .pagination button.active {
+      background: #0f3460;
+      color: white;
+      border-color: #0f3460;
+    }
+
+    .panel-card {
+      background: white;
+      padding: 16px;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+
+    .panel-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #0f3460;
+      margin-bottom: 12px;
+    }
+
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+      font-size: 12px;
+    }
+
+    .checkbox-item input {
+      cursor: pointer;
+    }
+
+    .checkbox-item label {
+      cursor: pointer;
+      margin: 0;
+    }
+
+    .quick-action-btn {
+      width: 100%;
+      padding: 10px;
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 500;
+      margin-bottom: 8px;
+      text-align: left;
+      transition: all 0.2s;
+    }
+
+    .quick-action-btn:hover {
+      background: #f5f5f5;
+    }
+
+    .quick-action-btn.primary {
+      background: #4a90e2;
+      color: white;
+      border-color: #4a90e2;
+    }
+
+    .help-text {
+      font-size: 12px;
+      color: #7f8c8d;
+      line-height: 1.5;
+    }
+
+    /* SETUP AND TRAINING SCREEN STYLES */
+    .card {
+      background: white;
+      border-radius: 8px;
+      padding: 24px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      margin-bottom: 20px;
+    }
+
+    .card-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #0f3460;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid #e8f0f7;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #bdc3c7;
+      border-radius: 4px;
+      font-size: 14px;
+      font-family: inherit;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: #0f3460;
+      box-shadow: 0 0 0 3px rgba(15, 52, 96, 0.1);
+    }
+
+    .btn {
+      padding: 12px 24px;
+      background: #0f3460;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .btn:hover {
+      background: #0a2445;
+    }
+
+    .btn:disabled {
+      background: #bdc3c7;
+      cursor: not-allowed;
+    }
+
+    .btn-secondary {
+      background: white;
+      color: #2c3e50;
+      border: 1px solid #bdc3c7;
+    }
+
+    .btn-secondary:hover {
+      background: #f5f5f5;
+    }
+
+    .list-item {
+      padding: 12px;
+      background: #f9f9f9;
+      border-radius: 4px;
+      margin-bottom: 8px;
+      border-left: 4px solid #0f3460;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px;
+      color: #7f8c8d;
+    }
+
+    .signature-box {
+      border: 2px solid #bdc3c7;
+      border-radius: 4px;
+      height: 150px;
+      background: white;
+      cursor: crosshair;
+      margin-bottom: 10px;
+      display: block;
+    }
+
+    .info-box {
+      background: #e8f0f7;
+      border-left: 4px solid #0f3460;
+      padding: 12px;
+      margin-bottom: 16px;
+      border-radius: 4px;
+      font-size: 13px;
+      color: #0f3460;
+    }
+
+    .signature-inputs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .signature-section {
+      border: 1px solid #e0e0e0;
+      padding: 16px;
+      border-radius: 4px;
+    }
+
+    .signature-section h4 {
+      color: #0f3460;
+      margin-bottom: 12px;
+    }
+
+    .step {
+      display: none;
+    }
+
+    .step.active {
+      display: block;
+    }
+
+    .csv-upload-area {
+      border: 2px dashed #bdc3c7;
+      padding: 20px;
+      border-radius: 4px;
+      text-align: center;
+      cursor: pointer;
+    }
+
+    .csv-upload-area:hover {
+      border-color: #0f3460;
+      background: #e8f0f7;
+    }
+
+    .success-message {
+      background: #c8e6c9;
+      border-left: 4px solid #28a745;
+      color: #155724;
+      padding: 12px;
+      border-radius: 4px;
+      margin-bottom: 16px;
+      font-size: 13px;
+      display: none;
+    }
+
+    .success-message.show {
+      display: block;
+    }
+
+    .error-message {
+      background: #ffebee;
+      border-left: 4px solid #c62828;
+      color: #c62828;
+      padding: 12px;
+      border-radius: 4px;
+      margin-bottom: 16px;
+      font-size: 13px;
+      display: none;
+    }
+
+    .error-message.show {
+      display: block;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    /* Setup/Training screens layout */
+    #setupScreen, #trainingScreen {
+      flex-direction: column;
+      gap: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="main-layout">
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="sidebar-logo">DSV Training</div>
+      <div class="sidebar-nav">
+        <div class="nav-item active" onclick="switchScreen('dashboard')" data-icon="compliance"><span class="nav-icon"></span> Compliance</div>
+        <div class="nav-item" onclick="switchScreen('setup')" data-icon="setup"><span class="nav-icon"></span> Setup</div>
+        <div class="nav-item" onclick="switchScreen('training')" data-icon="training"><span class="nav-icon"></span> Training</div>
+      </div>
+    </div>
+
+    <!-- TOP BAR -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <span id="pageTitle">Training Matrix</span>
+      </div>
+    </div>
+
+    <!-- CONTENT AREA -->
+    <div class="content-area">
+      <div class="success-message" id="successMsg"></div>
+      <div class="error-message" id="errorMsg"></div>
+
+      <!-- DASHBOARD SCREEN -->
+      <div id="dashboardScreen" class="screen active">
+        <div class="content-main">
+          <div class="page-header">
+            <div class="page-title">Training Matrix</div>
+            <div class="page-subtitle">See at a glance who is trained, what's due, and what needs attention.</div>
+          </div>
+
+          <!-- STAT CARDS -->
+          <div class="stat-cards">
+            <div class="stat-card">
+              <div class="stat-card-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#4a90e2" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M12 15c-4 0-7 2-7 5v2h14v-2c0-3-3-5-7-5z"/></svg></div>
+              <div class="stat-card-label">Total Employees</div>
+              <div class="stat-card-value" id="totalEmployees">0</div>
+              <div class="stat-card-detail">at this site</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-card-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#34A853" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-6"/></svg></div>
+              <div class="stat-card-label">Trainings Completed</div>
+              <div class="stat-card-value" id="trainingsCompleted">0</div>
+              <div class="stat-card-detail">sessions recorded</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-card-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#FBBC04" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
+              <div class="stat-card-label">Documents</div>
+              <div class="stat-card-value" id="totalDocuments">0</div>
+              <div class="stat-card-detail">in system</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-card-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#EA4335" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
+              <div class="stat-card-label">Last Updated</div>
+              <div class="stat-card-value" id="lastUpdated" style="font-size: 14px;">—</div>
+              <div class="stat-card-detail">training recorded</div>
+            </div>
+          </div>
+
+          <!-- FILTER BAR -->
+          <div class="filter-bar">
+            <input type="text" class="search-box" placeholder="Search by name...">
+            <div class="filter-group">
+              <label>Department</label>
+              <select><option>All Departments</option></select>
+            </div>
+            <div class="filter-group">
+              <label>Role</label>
+              <select><option>All Roles</option></select>
+            </div>
+            <div class="filter-group">
+              <label>Status</label>
+              <select><option>All Status</option></select>
+            </div>
+            <button class="reset-btn">Reset</button>
+          </div>
+
+          <!-- LEGEND -->
+          <div class="legend-bar">
+            <strong>Training Status Legend</strong>
+            <div class="legend-item"><div class="legend-icon completed"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M8 12l3 3 5-6"/><circle cx="12" cy="12" r="10"/></svg></div><span>Completed</span></div>
+            <div class="legend-item"><div class="legend-icon due-soon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l3 2"/></svg></div><span>Due Soon (≤ 30 days)</span></div>
+            <div class="legend-item"><div class="legend-icon overdue"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M15 9L9 15M9 9l6 6"/><circle cx="12" cy="12" r="10"/></svg></div><span>Overdue (> 30 days)</span></div>
+            <div class="legend-item"><div class="legend-icon not-started"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3" fill="white"/></svg></div><span>Not Started</span></div>
+          </div>
+
+          <!-- TABLE -->
+          <div class="table-container">
+            <div class="table-body">
+              <table>
+                <thead>
+                  <tr>
+                    <th style="width: 200px;">Employee</th>
+                    <th style="width: 150px;">Documents Trained</th>
+                    <th style="width: 120px;">Last Training</th>
+                    <th style="width: 100px;">Status</th>
+                  </tr>
+                </thead>
+                <tbody id="tableBody">
+                  <tr><td colspan="4" style="text-align: center; padding: 40px; color: #7f8c8d;">No training records yet</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="pagination">
+              <span>Showing training records</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT SIDEBAR -->
+        <div class="sidebar-panel">
+          <div class="panel-card">
+            <div class="panel-title">⚡ Quick Actions</div>
+            <button class="quick-action-btn primary" onclick="switchScreen('training')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline; margin-right: 8px;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm3.5-9h-3V8.5h-1v3h-3v1h3v3h1v-3h3v-1z"/></svg>Record Training</button>
+            <button class="quick-action-btn" onclick="switchScreen('setup')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="display:inline; margin-right: 8px;"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>Configure Site</button>
+          </div>
+
+          <div class="panel-card">
+            <div class="panel-title">ℹ️ System Status</div>
+            <div class="help-text">Track employee training across your site. All data is shared in real-time across devices.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SETUP SCREEN -->
+      <div id="setupScreen" class="screen">
+        <div class="content-main" style="width: 100%;">
+          <div class="page-header">
+            <div class="page-title">Site Setup</div>
+            <div class="page-subtitle">Configure your site, employees, and documents.</div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">Site Configuration</div>
+            <div class="form-group">
+              <label>Site Name</label>
+              <input type="text" id="siteName" placeholder="Enter site name">
+            </div>
+            <button class="btn" onclick="saveSetup()">Save Site Configuration</button>
+          </div>
+
+          <div class="card">
+            <div class="card-title">Upload Employees</div>
+            <div class="info-box">CSV format: Name, Role</div>
+            <div class="csv-upload-area" onclick="document.getElementById('employeeFile').click()">
+              <p>Click to upload CSV</p>
+              <input type="file" id="employeeFile" accept=".csv" style="display: none;" onchange="handleEmployeeCSV()">
+            </div>
+            <div id="employeesList" class="empty-state" style="margin-top: 20px;">No employees added yet</div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">Upload Documents</div>
+            <div class="info-box">CSV format: Name, Version</div>
+            <div class="csv-upload-area" onclick="document.getElementById('docFile').click()">
+              <p>Click to upload CSV</p>
+              <input type="file" id="docFile" accept=".csv" style="display: none;" onchange="handleDocumentCSV()">
+            </div>
+            <div id="documentsList" class="empty-state" style="margin-top: 20px;">No documents added yet</div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">Manual Entry</div>
+            <div class="form-group">
+              <label>Add Employee</label>
+              <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                <input type="text" id="empName" placeholder="Name" style="flex: 1;">
+                <input type="text" id="empRole" placeholder="Role" style="flex: 1;">
+                <button class="btn" onclick="addEmployee()" style="width: auto;">Add</button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Add Document</label>
+              <div style="display: flex; gap: 10px;">
+                <input type="text" id="docName" placeholder="Document Name" style="flex: 1;">
+                <input type="text" id="docVersion" placeholder="Version" style="flex: 1;">
+                <button class="btn" onclick="addDocument()" style="width: auto;">Add</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TRAINING SCREEN -->
+      <div id="trainingScreen" class="screen">
+        <div class="content-main" style="width: 100%;">
+          <div class="page-header">
+            <div class="page-title">Record Training</div>
+            <div class="page-subtitle">Document employee training sessions.</div>
+          </div>
+
+          <div id="stepSetup" class="step active">
+            <div class="card">
+              <div class="card-title">Step 1: Training Setup</div>
+              <div class="form-group">
+                <label>Trainer Name</label>
+                <input type="text" id="trainerName" placeholder="Enter your name">
+              </div>
+              <div class="form-group">
+                <label>Trainer Role</label>
+                <input type="text" id="trainerRole" placeholder="Enter role">
+              </div>
+              <div class="form-group">
+                <label>Training Date</label>
+                <input type="date" id="trainingDate">
+              </div>
+              <div class="form-group">
+                <label>Documents Covered</label>
+                <div id="documentCheckboxes"></div>
+              </div>
+              <div class="form-group">
+                <label>Employees Trained</label>
+                <div id="employeeCheckboxes"></div>
+              </div>
+              <button class="btn" onclick="goToStep('stepSetup', 'stepSignatures')">Next: Signatures →</button>
+            </div>
+          </div>
+
+          <div id="stepSignatures" class="step">
+            <div class="card">
+              <div class="card-title">Step 2: Collect Signatures</div>
+              <div class="info-box">Each trained employee must sign (draw or type).</div>
+              <div id="signaturesContainer"></div>
+              <div class="form-group">
+                <label>Trainer Signature</label>
+                <div class="signature-inputs">
+                  <div class="signature-section">
+                    <h4>Draw Signature</h4>
+                    <canvas id="trainerSigDraw" class="signature-box"></canvas>
+                    <button class="btn" onclick="clearSig('trainerSigDraw')" style="width: auto; font-size: 12px; padding: 8px 16px;">Clear</button>
+                  </div>
+                  <div class="signature-section">
+                    <h4>Or Type Name</h4>
+                    <input type="text" id="trainerSigType" placeholder="Type your name">
+                  </div>
+                </div>
+              </div>
+              <div class="button-group">
+                <button class="btn btn-secondary" onclick="goToStep('stepSignatures', 'stepSetup')">← Back</button>
+                <button class="btn" onclick="goToStep('stepSignatures', 'stepReview')">Next: Review →</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="stepReview" class="step">
+            <div class="card">
+              <div class="card-title">Step 3: Review & Save</div>
+              <div id="reviewContent"></div>
+              <div class="button-group">
+                <button class="btn btn-secondary" onclick="goToStep('stepReview', 'stepSignatures')">← Back</button>
+                <button class="btn" id="saveBtn" onclick="saveTraining()">✓ Save Training Session</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, doc, getDoc, setDoc, serverTimestamp, getDocs } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCTWx980DM4GJGGmIcWcVI8OTVFfNTS9TM",
+      authDomain: "dsv-training-compliance.firebaseapp.com",
+      projectId: "dsv-training-compliance",
+      storageBucket: "dsv-training-compliance.firebasestorage.app",
+      messagingSenderId: "372061255299",
+      appId: "1:372061255299:web:44396f4af92dd893688db6"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const SITE_ID = 'default-site';
+    let siteData = { siteName: '', roles: [], documents: [], employees: [] };
+    let trainingRecords = [];
+
+    // SVG Icon Definitions
+    const svgIcons = {
+      compliance: () => '<svg viewBox="0 0 24 24" style="width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round;"><path d="M5 4h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/><line x1="8" y1="9" x2="8" y2="16"/><line x1="12" y1="9" x2="12" y2="14"/><line x1="16" y1="9" x2="16" y2="12"/></svg>',
+      setup: () => '<svg viewBox="0 0 24 24" style="width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round;"><circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 6v6M1 12h6m6 0h6"/><path d="M4.22 4.22l4.24 4.24m3.08 3.08l4.24 4.24M19.78 4.22l-4.24 4.24m-3.08 3.08l-4.24 4.24"/></svg>',
+      training: () => '<svg viewBox="0 0 24 24" style="width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round;"><path d="M4 3h16a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><line x1="7" y1="8" x2="17" y2="8"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="7" y1="16" x2="13" y2="16"/></svg>',
+      checkmark: () => '<svg viewBox="0 0 24 24" style="width: 16px; height: 16px; stroke: #4caf50; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;"><path d="M8 12l3 3 5-6"/></svg>',
+    };
+
+    window.switchScreen = function(screen) {
+      document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+      document.getElementById(screen + 'Screen').classList.add('active');
+      document.querySelector(`div[onclick="switchScreen('${screen}')"]`).classList.add('active');
+
+      const titles = { dashboard: 'Training Matrix', setup: 'Site Setup', training: 'Record Training' };
+      document.getElementById('pageTitle').textContent = titles[screen];
+
+      if (screen === 'dashboard') loadDashboard();
+      if (screen === 'training') {
+        document.getElementById('trainingDate').valueAsDate = new Date();
+        renderTrainingUI();
+      }
+    };
+
+    window.saveSetup = async function() {
+      siteData.siteName = document.getElementById('siteName').value;
+      try {
+        await setDoc(doc(db, 'sites', SITE_ID), siteData);
+        showSuccess('Site configuration saved!');
+      } catch (error) {
+        showError('Error saving: ' + error.message);
+      }
+    };
+
+    window.handleEmployeeCSV = function() {
+      const file = document.getElementById('employeeFile').files[0];
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const csv = e.target.result;
+        const lines = csv.trim().split('\n').slice(1);
+        lines.forEach(line => {
+          const [name, role] = line.split(',').map(x => x.trim());
+          if (name && role && !siteData.employees.find(e => e.name === name)) {
+            siteData.employees.push({ name, role });
+          }
+        });
+        renderSetupUI();
+        renderTrainingUI();
+      };
+      reader.readAsText(file);
+    };
+
+    window.handleDocumentCSV = function() {
+      const file = document.getElementById('docFile').files[0];
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const csv = e.target.result;
+        const lines = csv.trim().split('\n').slice(1);
+        lines.forEach(line => {
+          const [name, version] = line.split(',').map(x => x.trim());
+          if (name && version && !siteData.documents.find(d => d.name === name)) {
+            siteData.documents.push({ name, version });
+          }
+        });
+        renderSetupUI();
+        renderTrainingUI();
+      };
+      reader.readAsText(file);
+    };
+
+    window.addEmployee = function() {
+      const name = document.getElementById('empName').value.trim();
+      const role = document.getElementById('empRole').value.trim();
+      if (name && role && !siteData.employees.find(e => e.name === name)) {
+        siteData.employees.push({ name, role });
+        document.getElementById('empName').value = '';
+        document.getElementById('empRole').value = '';
+        renderSetupUI();
+        renderTrainingUI();
+      }
+    };
+
+    window.addDocument = function() {
+      const name = document.getElementById('docName').value.trim();
+      const version = document.getElementById('docVersion').value.trim();
+      if (name && version && !siteData.documents.find(d => d.name === name)) {
+        siteData.documents.push({ name, version });
+        document.getElementById('docName').value = '';
+        document.getElementById('docVersion').value = '';
+        renderSetupUI();
+        renderTrainingUI();
+      }
+    };
+
+    window.removeEmployee = function(idx) {
+      siteData.employees.splice(idx, 1);
+      renderSetupUI();
+      renderTrainingUI();
+    };
+
+    window.removeDocument = function(idx) {
+      siteData.documents.splice(idx, 1);
+      renderSetupUI();
+      renderTrainingUI();
+    };
+
+    function renderSetupUI() {
+      document.getElementById('employeesList').innerHTML = siteData.employees.length === 0 ?
+        '<div class="empty-state">No employees added yet</div>' :
+        siteData.employees.map((e, i) => `<div class="list-item">${e.name} - ${e.role}<button class="btn" onclick="removeEmployee(${i})" style="width: auto; padding: 8px 16px;">Remove</button></div>`).join('');
+
+      document.getElementById('documentsList').innerHTML = siteData.documents.length === 0 ?
+        '<div class="empty-state">No documents added yet</div>' :
+        siteData.documents.map((d, i) => `<div class="list-item">${d.name} (v${d.version})<button class="btn" onclick="removeDocument(${i})" style="width: auto; padding: 8px 16px;">Remove</button></div>`).join('');
+    }
+
+    function renderTrainingUI() {
+      document.getElementById('documentCheckboxes').innerHTML = siteData.documents.map((d, i) =>
+        `<div style="margin-bottom: 8px;"><input type="checkbox" id="doc${i}" value="${d.name}"><label style="display: inline; font-weight: normal; margin-left: 8px;">${d.name} (v${d.version})</label></div>`).join('');
+
+      document.getElementById('employeeCheckboxes').innerHTML = siteData.employees.map((e, i) =>
+        `<div style="margin-bottom: 8px;"><input type="checkbox" id="emp${i}" value="${e.name}"><label style="display: inline; font-weight: normal; margin-left: 8px;">${e.name} (${e.role})</label></div>`).join('');
+    }
+
+    window.goToStep = function(from, to) {
+      if (from === 'stepSetup' && !document.getElementById('trainerName').value.trim()) {
+        showError('Please enter trainer name');
+        return;
+      }
+      if (from === 'stepSignatures') {
+        const trainedEmps = [];
+        document.querySelectorAll('#employeeCheckboxes input:checked').forEach(cb => trainedEmps.push(cb.value));
+        for (let emp of trainedEmps) {
+          const sigDraw = document.getElementById(`sig${emp}Draw`);
+          const sigType = document.getElementById(`sig${emp}Type`);
+          const drawHasContent = sigDraw && sigDraw.toDataURL() !== 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+          const typeHasContent = sigType && sigType.value.trim();
+          if (!drawHasContent && !typeHasContent) {
+            showError(`${emp} must sign (draw or type)`);
+            return;
+          }
+        }
+        const trainerDrawHasContent = document.getElementById('trainerSigDraw').toDataURL() !== 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+        const trainerTypeHasContent = document.getElementById('trainerSigType').value.trim();
+        if (!trainerDrawHasContent && !trainerTypeHasContent) {
+          showError('Trainer must sign (draw or type)');
+          return;
+        }
+      }
+      document.getElementById(from).classList.remove('active');
+      document.getElementById(to).classList.add('active');
+      if (to === 'stepSignatures') renderSignatureFields();
+      if (to === 'stepReview') renderReview();
+    };
+
+    function setupSigCanvas(id) {
+      const canvas = document.getElementById(id);
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      canvas.width = canvas.offsetWidth;
+      canvas.height = 150;
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      let drawing = false;
+      canvas.addEventListener('mousedown', () => drawing = true);
+      canvas.addEventListener('mouseup', () => drawing = false);
+      canvas.addEventListener('mousemove', (e) => {
+        if (!drawing) return;
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        ctx.fillStyle = '#000';
+        ctx.beginPath();
+        ctx.arc(x, y, 2, 0, Math.PI * 2);
+        ctx.fill();
+      });
+    }
+
+    window.clearSig = function(id) {
+      const c = document.getElementById(id);
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(0, 0, c.width, c.height);
+    };
+
+    function renderSignatureFields() {
+      const trained = [];
+      document.querySelectorAll('#employeeCheckboxes input:checked').forEach(cb => trained.push(cb.value));
+      const cont = document.getElementById('signaturesContainer');
+      cont.innerHTML = trained.map(t => `<div style="background: #f9f9f9; padding: 16px; border-radius: 4px; margin-bottom: 16px; border-left: 4px solid #0f3460;"><h4 style="margin-bottom: 12px; color: #0f3460;">${t}</h4><div class="signature-inputs"><div class="signature-section"><h4>Draw</h4><canvas id="sig${t}Draw" class="signature-box"></canvas><button class="btn" onclick="clearSig('sig${t}Draw')" style="width: auto; font-size: 12px; padding: 8px 16px;">Clear</button></div><div class="signature-section"><h4>Or Type</h4><input type="text" id="sig${t}Type" placeholder="Type name"></div></div></div>`).join('');
+      setTimeout(() => {
+        trained.forEach(t => setupSigCanvas(`sig${t}Draw`));
+        setupSigCanvas('trainerSigDraw');
+      }, 100);
+    }
+
+    function renderReview() {
+      const docs = [];
+      document.querySelectorAll('#documentCheckboxes input:checked').forEach(cb => docs.push(cb.value));
+      const emps = [];
+      document.querySelectorAll('#employeeCheckboxes input:checked').forEach(cb => emps.push(cb.value));
+      const date = new Date(document.getElementById('trainingDate').value);
+
+      let html = `<h3 style="color: #0f3460; margin-bottom: 16px;">Training Summary</h3>
+        <div style="margin-bottom: 20px; line-height: 1.8;">
+          <strong>Trainer:</strong> ${document.getElementById('trainerName').value} (${document.getElementById('trainerRole').value})<br>
+          <strong>Date:</strong> ${date.toLocaleDateString()}<br>
+          <strong>Documents:</strong> ${docs.length}<br>
+          <strong>Employees:</strong> ${emps.length}
+        </div>
+        <h4 style="margin-top: 20px; color: #0f3460;">Documents:</h4>`;
+      docs.forEach(d => html += `<div style="margin-left: 20px; color: #555; margin-bottom: 5px;">• ${d}</div>`);
+      html += '<h4 style="margin-top: 20px; color: #0f3460;">Employees:</h4>';
+      emps.forEach(e => html += `<div style="margin-left: 20px; color: #555; margin-bottom: 5px;">✓ ${e}</div>`);
+      document.getElementById('reviewContent').innerHTML = html;
+    }
+
+    window.saveTraining = async function() {
+      const docs = [];
+      document.querySelectorAll('#documentCheckboxes input:checked').forEach(cb => docs.push(cb.value));
+      const emps = [];
+      document.querySelectorAll('#employeeCheckboxes input:checked').forEach(cb => emps.push(cb.value));
+
+      document.getElementById('saveBtn').disabled = true;
+      try {
+        await addDoc(collection(db, 'trainingSessions'), {
+          siteId: SITE_ID,
+          trainerName: document.getElementById('trainerName').value,
+          trainerRole: document.getElementById('trainerRole').value,
+          trainingDate: document.getElementById('trainingDate').value,
+          documents: docs,
+          employees: emps,
+          timestamp: serverTimestamp()
+        });
+        showSuccess('Training session saved!');
+        setTimeout(() => resetTraining(), 2000);
+      } catch (error) {
+        showError('Error: ' + error.message);
+        document.getElementById('saveBtn').disabled = false;
+      }
+    };
+
+    function resetTraining() {
+      document.getElementById('stepSetup').classList.add('active');
+      document.getElementById('stepSignatures').classList.remove('active');
+      document.getElementById('stepReview').classList.remove('active');
+      document.getElementById('trainerName').value = '';
+      document.getElementById('trainerRole').value = '';
+      document.getElementById('trainingDate').valueAsDate = new Date();
+      document.querySelectorAll('#documentCheckboxes input').forEach(cb => cb.checked = false);
+      document.querySelectorAll('#employeeCheckboxes input').forEach(cb => cb.checked = false);
+      document.getElementById('saveBtn').disabled = false;
+      switchScreen('dashboard');
+    }
+
+    async function loadDashboard() {
+      try {
+        const snap = await getDoc(doc(db, 'sites', SITE_ID));
+        if (snap.exists()) {
+          const data = snap.data();
+          document.getElementById('totalEmployees').textContent = data.employees?.length || 0;
+          document.getElementById('totalDocuments').textContent = data.documents?.length || 0;
+        }
+
+        const querySnap = await getDocs(collection(db, 'trainingSessions'));
+        trainingRecords = [];
+        const employeeTraining = {};
+
+        querySnap.forEach(doc => {
+          const record = doc.data();
+          trainingRecords.push(record);
+          record.employees.forEach(emp => {
+            if (!employeeTraining[emp]) {
+              employeeTraining[emp] = [];
+            }
+            employeeTraining[emp].push({
+              date: record.trainingDate,
+              docs: record.documents.length,
+              timestamp: record.timestamp
+            });
+          });
+        });
+
+        document.getElementById('trainingsCompleted').textContent = trainingRecords.length;
+
+        if (trainingRecords.length > 0) {
+          const lastRecord = trainingRecords.sort((a, b) => (b.timestamp?.toDate() || 0) - (a.timestamp?.toDate() || 0))[0];
+          document.getElementById('lastUpdated').textContent = new Date(lastRecord.trainingDate).toLocaleDateString();
+        }
+
+        const tbody = document.getElementById('tableBody');
+        if (Object.keys(employeeTraining).length === 0) {
+          tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 40px; color: #7f8c8d;">No training records yet</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = Object.entries(employeeTraining).map(([empName, trainings]) => {
+          const lastTraining = trainings.sort((a, b) => (b.timestamp?.toDate() || 0) - (a.timestamp?.toDate() || 0))[0];
+          const lastDate = lastTraining ? new Date(lastTraining.date).toLocaleDateString() : '—';
+          const totalDocs = trainings.reduce((sum, t) => sum + t.docs, 0);
+          return `<tr>
+            <td><div class="employee-cell"><div class="employee-avatar">${empName.charAt(0).toUpperCase()}</div><strong>${empName}</strong></div></td>
+            <td>${totalDocs}</td>
+            <td>${lastDate}</td>
+            <td><div class="training-status completed">✓</div></td>
+          </tr>`;
+        }).join('');
+      } catch (error) {
+        console.error('Load dashboard error:', error);
+      }
+    }
+
+    function showSuccess(msg) {
+      const el = document.getElementById('successMsg');
+      el.innerHTML = svgIcons.checkmark() + ' ' + msg;
+      el.classList.add('show');
+      setTimeout(() => el.classList.remove('show'), 3000);
+    }
+
+    function showError(msg) {
+      const el = document.getElementById('errorMsg');
+      el.textContent = msg;
+      el.classList.add('show');
+      setTimeout(() => el.classList.remove('show'), 5000);
+    }
+
+    // Initialize SVG Icons
+    function initializeIcons() {
+      document.querySelectorAll('.nav-item[data-icon]').forEach(navItem => {
+        const iconName = navItem.getAttribute('data-icon');
+        const iconContainer = navItem.querySelector('.nav-icon');
+        if (iconContainer && svgIcons[iconName]) {
+          iconContainer.innerHTML = svgIcons[iconName]();
+        }
+      });
+    }
+
+    // Initialize
+    document.getElementById('trainingDate').valueAsDate = new Date();
+    initializeIcons();
+    async function init() {
+      try {
+        const snap = await getDoc(doc(db, 'sites', SITE_ID));
+        if (snap.exists()) {
+          siteData = snap.data();
+          document.getElementById('siteName').value = siteData.siteName || '';
+        }
+      } catch (e) {}
+      renderSetupUI();
+      renderTrainingUI();
+    }
+    init();
+  </script>
+</body>
+</html>
