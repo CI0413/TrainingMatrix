@@ -557,6 +557,7 @@
         <div class="selection-section">
             <h2>Select Employees Attending</h2>
             <div id="employeesContainer" class="documents-list"></div>
+            <button class="btn btn-primary" onclick="renderSignInSheet()" style="margin-top: 16px;">Generate Sign-In Sheet</button>
         </div>
 
         <!-- Sign-In Sheet -->
@@ -901,7 +902,7 @@
                 role: cb.dataset.role
             }));
 
-            renderSignInSheet();
+            // DO NOT render here - user clicks "Show Sign-In Sheet" button instead
         }
 
         // Add custom topic
@@ -955,16 +956,22 @@
                 </div>
             `).join('');
 
-            // Initialize canvas for each employee
-            selectedEmployees.forEach(emp => {
-                initializeEmployeeCanvas(emp.id);
-            });
+            // Initialize canvas for each employee after DOM is ready
+            setTimeout(() => {
+                selectedEmployees.forEach(emp => {
+                    initializeEmployeeCanvas(emp.id);
+                });
+            }, 100);
         }
 
         // Initialize employee signature canvas
         function initializeEmployeeCanvas(empId) {
             const canvas = document.getElementById(`canvas-${empId}`);
-            if (!canvas) return;
+            if (!canvas) {
+                console.error(`Canvas not found for ${empId}`);
+                return;
+            }
+            console.log(`Initializing canvas for ${empId}`);
 
             const ctx = canvas.getContext('2d');
             let isDrawing = false;
@@ -973,6 +980,11 @@
             const rect = canvas.getBoundingClientRect();
             canvas.width = rect.width;
             canvas.height = rect.height;
+
+            // Fill with white background so signatures show up clearly
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#333'; // Reset to dark for drawing
 
             canvas.addEventListener('mousedown', (e) => {
                 isDrawing = true;
@@ -1030,9 +1042,13 @@
             // Handle typed signature input
             const typedInput = document.getElementById(`typed-${empId}`);
             if (typedInput) {
+                console.log(`Added input listener for typed-${empId}`);
                 typedInput.addEventListener('input', () => {
+                    console.log(`Typed input changed for ${empId}`);
                     updateEmployeeSignatureStatus(empId);
                 });
+            } else {
+                console.error(`Typed input not found for ${empId}`);
             }
         }
 
@@ -1051,9 +1067,15 @@
 
         // Set signature mode for employee
         function setSigMode(empId, mode) {
-            const card = document.querySelector(`#canvas-${empId}`).closest('.employee-card');
+            console.log(`setSigMode called: empId=${empId}, mode=${mode}`);
+            const card = document.querySelector(`#canvas-${empId}`)?.closest('.employee-card');
+            if (!card) {
+                console.error(`Card not found for ${empId}`);
+                return;
+            }
             const canvas = card.querySelector(`canvas`);
             const input = card.querySelector(`input[type="text"].signature-input`);
+            console.log(`Canvas:`, !!canvas, `Input:`, !!input);
             const buttons = card.querySelectorAll('.signature-mode-btn');
 
             if (mode === 'draw') {
@@ -1109,7 +1131,12 @@
             const canvas = document.getElementById(`canvas-${empId}`);
             const input = document.getElementById(`typed-${empId}`);
             
-            canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // Restore white background
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
             input.value = '';
             
             delete employeeSignatures[empId];
@@ -1125,6 +1152,10 @@
             const rect = canvas.getBoundingClientRect();
             canvas.width = rect.width;
             canvas.height = rect.height;
+
+            // Fill with white background
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
 
             canvas.addEventListener('mousedown', (e) => {
                 isDrawing = true;
@@ -1229,7 +1260,12 @@
             const canvas = document.getElementById('trainerCanvas');
             const input = document.getElementById('trainerTypedName');
 
-            canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // Restore white background
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
             input.value = '';
 
             trainerHasSignature = false;
