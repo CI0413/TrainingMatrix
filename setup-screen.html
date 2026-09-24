@@ -989,6 +989,29 @@
       }
     };
 
+    // Load existing data from Firestore on page load
+    async function loadExistingDataFromFirestore() {
+      try {
+        const doc = await db.collection('sites').doc(SITE_ID).get();
+        if (doc.exists) {
+          const data = doc.data();
+          if (data.siteConfig) window.appState.siteConfig = data.siteConfig;
+          if (data.categories) window.appState.categories = data.categories;
+          if (data.documents) window.appState.documents = data.documents;
+          if (data.roles) window.appState.roles = data.roles;
+          if (data.employees) window.appState.employees = data.employees;
+          if (data.gracePeriods) window.appState.gracePeriods = data.gracePeriods;
+          if (data.notifications) window.appState.notifications = data.notifications;
+          console.log('Data loaded from Firestore:', window.appState);
+        }
+      } catch (error) {
+        console.error('Error loading data from Firestore:', error);
+      }
+    }
+
+    // Load data when page loads
+    window.addEventListener('DOMContentLoaded', loadExistingDataFromFirestore);
+
     // Screen switching
     window.switchScreen = function(screenName) {
       document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
