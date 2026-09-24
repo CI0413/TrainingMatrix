@@ -1226,37 +1226,7 @@
             updateTrainerSignatureStatus();
         }
 
-        // Mode switching
-        document.querySelectorAll('.mode-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                selectedMode = btn.dataset.mode;
 
-                document.querySelectorAll('.mode-content').forEach(content => content.classList.add('hidden'));
-                if (selectedMode === 'role-based') {
-                    document.getElementById('roleBasedMode').classList.remove('hidden');
-                } else {
-                    document.getElementById('customMode').classList.remove('hidden');
-                    displayCustomDocuments();
-                }
-
-                selectedDocuments = [];
-                renderSignInSheet();
-            });
-        });
-
-        // Trainer signature mode switching
-        document.querySelectorAll('.trainer-sig-mode-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                setTrainerSigMode(btn.dataset.sigMode);
-            });
-        });
-
-        // Track typed trainer name
-        document.getElementById('trainerTypedName').addEventListener('input', () => {
-            updateTrainerSignatureStatus();
-        });
 
         // Track typed employee names
         document.addEventListener('change', (e) => {
@@ -1709,13 +1679,41 @@
 
         // Initialize on load
         window.addEventListener('load', () => {
-            if (!loadFirebaseConfig()) {
-                showConfigModal();
-            } else {
-                initFirebase();
-            }
+            initFirebase();
             initializeTrainerCanvas();
             setTrainerSigMode('draw');
+
+            // Mode switching
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    selectedMode = btn.dataset.mode;
+
+                    document.querySelectorAll('.mode-content').forEach(content => content.classList.add('hidden'));
+                    if (selectedMode === 'role-based') {
+                        document.getElementById('roleBasedMode').classList.remove('hidden');
+                    } else {
+                        document.getElementById('customMode').classList.remove('hidden');
+                        displayCustomDocuments();
+                    }
+
+                    selectedDocuments = [];
+                    renderSignInSheet();
+                });
+            });
+
+            // Trainer signature mode switching
+            document.querySelectorAll('.trainer-sig-mode-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    setTrainerSigMode(btn.dataset.sigMode);
+                });
+            });
+
+            // Track typed trainer name
+            document.getElementById('trainerTypedName').addEventListener('input', () => {
+                updateTrainerSignatureStatus();
+            });
         });
     </script>
 </body>
