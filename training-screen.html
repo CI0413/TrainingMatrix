@@ -664,22 +664,17 @@
         let trainerSignatureMode = 'draw';
         let trainerHasSignature = false;
 
-        // SVG Icon Definitions
-        const svgIcons = {
-            checkmark: () => '<svg viewBox="0 0 24 24" style="width: 20px; height: 20px; stroke: #4caf50; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;"><path d="M8 12l3 3 5-6"/></svg>',
+        // Firebase Config - Hardcoded
+        const firebaseConfig = {
+            apiKey: "AIzaSyCTWx980DM4GJGGmIcWcVI8OTVFfNTS9TM",
+            authDomain: "dsv-training-compliance.firebaseapp.com",
+            projectId: "dsv-training-compliance",
+            storageBucket: "dsv-training-compliance.firebasestorage.app",
+            messagingSenderId: "372061255299",
+            appId: "1:372061255299:web:44396f4af92dd893688db6"
         };
-        function loadFirebaseConfig() {
-            const stored = localStorage.getItem('firebaseConfig');
-            if (stored) {
-                try {
-                    firebaseConfig = JSON.parse(stored);
-                    return true;
-                } catch (e) {
-                    localStorage.removeItem('firebaseConfig');
-                }
-            }
-            return false;
-        }
+
+        // SVG Icon Definitions
 
         // Show config modal
         function showConfigModal() {
@@ -731,11 +726,6 @@
         // Initialize Firebase
         async function initFirebase() {
             try {
-                if (!firebaseConfig) {
-                    showConfigModal();
-                    return;
-                }
-
                 firebase.initializeApp(firebaseConfig);
                 db = firebase.firestore();
                 
