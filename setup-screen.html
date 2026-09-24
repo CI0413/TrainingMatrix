@@ -1360,12 +1360,6 @@
       renderEmployeesTable();
       showToast('Employee added! Remember to click Save Employees', 'info');
     }
-      document.getElementById('empStartDate').value = '';
-      document.getElementById('empDept').value = '';
-
-      renderEmployeesTable();
-      updateRoleDropdowns();
-    }
 
     function renderEmployeesTable() {
       const tbody = document.getElementById('employeesTableBody');
