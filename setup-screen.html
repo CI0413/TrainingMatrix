@@ -574,6 +574,16 @@
                   <input type="date" id="docEffectiveDate">
                 </div>
               </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Date Added</label>
+                  <input type="date" id="docDateAdded">
+                </div>
+                <div class="form-group">
+                  <label>Grace Period (days)</label>
+                  <input type="number" id="docGracePeriod" placeholder="e.g., 14" min="1" value="14">
+                </div>
+              </div>
               <button class="btn btn-primary" onclick="addDocument()">Add Document</button>
             </div>
 
@@ -594,8 +604,8 @@
               <tr>
                 <th>Document Name</th>
                 <th>Category</th>
-                <th>Version</th>
-                <th>Effective Date</th>
+                <th>Date Added</th>
+                <th>Grace Period (days)</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -690,7 +700,16 @@
                   <input type="date" id="empStartDate">
                 </div>
               </div>
-              <div class="form-row full">
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Training Stage</label>
+                  <select id="empTrainingStage">
+                    <option value="">-- Select Stage --</option>
+                    <option value="Stage 1">Stage 1</option>
+                    <option value="Stage 2">Stage 2</option>
+                    <option value="Ongoing">Ongoing</option>
+                  </select>
+                </div>
                 <div class="form-group">
                   <label>Department (optional)</label>
                   <input type="text" id="empDept" placeholder="e.g., Receiving, Picking">
@@ -716,9 +735,9 @@
               <tr>
                 <th>Name</th>
                 <th>Role</th>
-                <th>Supervisor</th>
-                <th>Department</th>
                 <th>Start Date</th>
+                <th>Training Stage</th>
+                <th>Supervisor</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -1010,7 +1029,15 @@
     }
 
     // Load data when page loads
-    window.addEventListener('DOMContentLoaded', loadExistingDataFromFirestore);
+    window.addEventListener('DOMContentLoaded', () => {
+      loadExistingDataFromFirestore();
+      // Initialize document date to today
+      const today = new Date().toISOString().split('T')[0];
+      const docDateInput = document.getElementById('docDateAdded');
+      if (docDateInput) {
+        docDateInput.value = today;
+      }
+    });
 
     // Screen switching
     window.switchScreen = function(screenName) {
@@ -1126,6 +1153,8 @@
       const category = document.getElementById('docCategory').value;
       const version = document.getElementById('docVersion').value;
       const effectiveDate = document.getElementById('docEffectiveDate').value;
+      const dateAdded = document.getElementById('docDateAdded').value;
+      const gracePeriod = parseInt(document.getElementById('docGracePeriod').value) || 14;
 
       if (!name || !category) {
         showToast('Please enter document name and category', 'error');
@@ -1137,15 +1166,20 @@
         name,
         category,
         version,
-        effectiveDate
+        effectiveDate,
+        dateAdded,
+        gracePeriod
       });
 
       document.getElementById('docName').value = '';
       document.getElementById('docCategory').value = '';
       document.getElementById('docVersion').value = '';
       document.getElementById('docEffectiveDate').value = '';
+      document.getElementById('docDateAdded').value = new Date().toISOString().split('T')[0];
+      document.getElementById('docGracePeriod').value = '14';
 
       renderDocumentsTable();
+      showToast('Document added! Remember to click Save Documents', 'info');
     }
 
     function renderDocumentsTable() {
@@ -1159,8 +1193,8 @@
         <tr>
           <td>${doc.name}</td>
           <td>${doc.category}</td>
-          <td>${doc.version || '—'}</td>
-          <td>${doc.effectiveDate || '—'}</td>
+          <td>${doc.dateAdded || '—'}</td>
+          <td>${doc.gracePeriod || 14} days</td>
           <td><button class="btn btn-danger" onclick="removeDocument(${idx})">Remove</button></td>
         </tr>
       `).join('');
@@ -1298,6 +1332,7 @@
       const role = document.getElementById('empRole').value;
       const supervisor = document.getElementById('empSupervisor').value;
       const startDate = document.getElementById('empStartDate').value;
+      const trainingStage = document.getElementById('empTrainingStage').value;
       const dept = document.getElementById('empDept').value;
 
       if (!name || !role) {
@@ -1311,12 +1346,20 @@
         role,
         supervisor,
         startDate,
+        trainingStage,
         dept
       });
 
       document.getElementById('empName').value = '';
       document.getElementById('empRole').value = '';
       document.getElementById('empSupervisor').value = '';
+      document.getElementById('empStartDate').value = '';
+      document.getElementById('empTrainingStage').value = '';
+      document.getElementById('empDept').value = '';
+
+      renderEmployeesTable();
+      showToast('Employee added! Remember to click Save Employees', 'info');
+    }
       document.getElementById('empStartDate').value = '';
       document.getElementById('empDept').value = '';
 
@@ -1335,9 +1378,9 @@
         <tr>
           <td>${emp.name}</td>
           <td>${emp.role}</td>
-          <td>${emp.supervisor || '—'}</td>
-          <td>${emp.dept || '—'}</td>
           <td>${emp.startDate || '—'}</td>
+          <td>${emp.trainingStage || '—'}</td>
+          <td>${emp.supervisor || '—'}</td>
           <td><button class="btn btn-danger" onclick="removeEmployee(${idx})">Remove</button></td>
         </tr>
       `).join('');
