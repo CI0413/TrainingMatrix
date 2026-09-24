@@ -674,6 +674,9 @@
         };
 
         // SVG Icon Definitions
+        const svgIcons = {
+            checkmark: () => '<svg viewBox="0 0 24 24" style="width: 20px; height: 20px; stroke: #4caf50; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;"><path d="M8 12l3 3 5-6"/></svg>',
+        };
 
         // Show config modal
         function showConfigModal() {
@@ -1023,6 +1026,14 @@
                 isDrawing = false;
                 updateEmployeeSignatureStatus(empId);
             });
+
+            // Handle typed signature input
+            const typedInput = document.getElementById(`typed-${empId}`);
+            if (typedInput) {
+                typedInput.addEventListener('input', () => {
+                    updateEmployeeSignatureStatus(empId);
+                });
+            }
         }
 
         // Get canvas coordinates for mouse
