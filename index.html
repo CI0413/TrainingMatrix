@@ -864,34 +864,27 @@
             lightning: () => '<svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" fill="currentColor"/></svg>',
         };
 
-        // Firebase Config
-        function loadFirebaseConfig() {
-            const stored = localStorage.getItem('firebaseConfig');
-            if (stored) {
-                try {
-                    return JSON.parse(stored);
-                } catch (e) {
-                    return null;
-                }
-            }
-            return null;
-        }
+        // Firebase Config - Hardcoded like setup-screen.html
+        const firebaseConfig = {
+            apiKey: "AIzaSyCTWx980DM4GJGGmIcWcVI8OTVFfNTS9TM",
+            authDomain: "dsv-training-compliance.firebaseapp.com",
+            projectId: "dsv-training-compliance",
+            storageBucket: "dsv-training-compliance.firebasestorage.app",
+            messagingSenderId: "372061255299",
+            appId: "1:372061255299:web:44396f4af92dd893688db6"
+        };
+
+        let db;
+        const SITE_ID = 'default-site';
 
         // Initialize Firebase
         async function initFirebase() {
-            const config = loadFirebaseConfig();
-            if (!config) {
-                alert('Please configure Firebase first in the Training Screen');
-                return;
-            }
-
             try {
-                firebase.initializeApp(config);
+                firebase.initializeApp(firebaseConfig);
                 db = firebase.firestore();
                 await loadDashboardData();
             } catch (error) {
                 console.error('Firebase init error:', error);
-                alert('Error connecting to Firebase');
             }
         }
 
