@@ -965,14 +965,19 @@
         // Calculate status for one employee
         function calculateStatus(emp, sessions) {
             const role = (siteData.roles || []).find(r => r.name === emp.role);
-            const requiredDocs = role?.requiredDocs || [];
+            // Setup saves requiredDocs as document IDs; look up each document (frequency lives on the document)
+            const requiredDocs = (role?.requiredDocs || []).map(ref => {
+                const docId = typeof ref === 'string' ? ref : ref.docId;
+                const doc = (siteData.documents || []).find(d => d.id === docId);
+                return doc ? { docId: doc.id, docName: doc.name, frequency: doc.frequency || 'One-time' } : null;
+            }).filter(Boolean);
 
             // Get training history for each document
             const docStatus = {};
             requiredDocs.forEach(reqDoc => {
                 const latestSession = sessions
-                    .filter(s => s.employees?.some(e => e.id === emp.id) && s.documents?.some(d => d.id === reqDoc.docId))
-                    .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0];
+                    .filter(s => s.employees?.some(e => e.id === emp.id && e.hasSigned === true) && s.documents?.some(d => d.id === reqDoc.docId))
+                    .sort((a, b) => new Date(b.date || b.timestamp) - new Date(a.date || a.timestamp))[0];
 
                 if (!latestSession) {
                     docStatus[reqDoc.docId] = { status: 'not-started', lastDate: null };
@@ -1011,10 +1016,13 @@
             const last = new Date(lastTrainingDate);
             const today = new Date();
 
-            let monthsToAdd = 0;
-            if (frequency.includes('3')) monthsToAdd = 3;
-            else if (frequency.includes('6')) monthsToAdd = 6;
-            else if (frequency.includes('12') || frequency.includes('24')) monthsToAdd = 12;
+            // Frequency options from setup: One-time, Monthly, Quarterly, Annual
+            const f = String(frequency || 'One-time').toLowerCase();
+            let monthsToAdd = null;
+            if (f.includes('month')) monthsToAdd = 1;
+            else if (f.includes('quarter')) monthsToAdd = 3;
+            else if (f.includes('annual') || f.includes('year')) monthsToAdd = 12;
+            if (monthsToAdd === null) return -Infinity; // one-time: never comes due again
 
             const dueDate = new Date(last);
             dueDate.setMonth(dueDate.getMonth() + monthsToAdd);
