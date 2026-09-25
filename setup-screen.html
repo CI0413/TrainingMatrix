@@ -576,12 +576,46 @@
               </div>
               <div class="form-row">
                 <div class="form-group">
-                  <label>Date Added</label>
-                  <input type="date" id="docDateAdded">
+                  <label>Training Frequency</label>
+                  <select id="docFrequency">
+                    <option value="One-time">One-time only</option>
+                    <option value="Annual">Annual refresher</option>
+                    <option value="Quarterly">Quarterly refresher</option>
+                    <option value="Monthly">Monthly refresher</option>
+                  </select>
                 </div>
                 <div class="form-group">
                   <label>Grace Period (days)</label>
                   <input type="number" id="docGracePeriod" placeholder="e.g., 14" min="1" value="14">
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Date Added</label>
+                  <input type="date" id="docDateAdded">
+                </div>
+                <div class="form-group">
+                  <label style="visibility: hidden;">Placeholder</label>
+                  <div></div>
+                </div>
+              </div>
+              <div class="form-row full">
+                <div class="form-group">
+                  <label>Applicable Stages (for new employees)</label>
+                  <div style="display: flex; gap: 16px; margin-top: 8px;">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                      <input type="checkbox" id="docStage1" value="Stage 1">
+                      <span>Stage 1</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                      <input type="checkbox" id="docStage2" value="Stage 2">
+                      <span>Stage 2</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                      <input type="checkbox" id="docOngoing" value="Ongoing">
+                      <span>Ongoing</span>
+                    </label>
+                  </div>
                 </div>
               </div>
               <button class="btn btn-primary" onclick="addDocument()">Add Document</button>
@@ -604,8 +638,8 @@
               <tr>
                 <th>Document Name</th>
                 <th>Category</th>
-                <th>Date Added</th>
-                <th>Grace Period (days)</th>
+                <th>Grace Period</th>
+                <th>Applicable Stages</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -1153,6 +1187,13 @@
       const effectiveDate = document.getElementById('docEffectiveDate').value;
       const dateAdded = document.getElementById('docDateAdded').value;
       const gracePeriod = parseInt(document.getElementById('docGracePeriod').value) || 14;
+      const frequency = document.getElementById('docFrequency').value;
+      
+      // Capture stages
+      const stages = [];
+      if (document.getElementById('docStage1').checked) stages.push('Stage 1');
+      if (document.getElementById('docStage2').checked) stages.push('Stage 2');
+      if (document.getElementById('docOngoing').checked) stages.push('Ongoing');
 
       if (!name || !category) {
         showToast('Please enter document name and category', 'error');
@@ -1166,7 +1207,9 @@
         version,
         effectiveDate,
         dateAdded,
-        gracePeriod
+        gracePeriod,
+        frequency,
+        stages
       });
 
       document.getElementById('docName').value = '';
@@ -1175,6 +1218,10 @@
       document.getElementById('docEffectiveDate').value = '';
       document.getElementById('docDateAdded').value = new Date().toISOString().split('T')[0];
       document.getElementById('docGracePeriod').value = '14';
+      document.getElementById('docFrequency').value = 'One-time';
+      document.getElementById('docStage1').checked = false;
+      document.getElementById('docStage2').checked = false;
+      document.getElementById('docOngoing').checked = false;
 
       renderDocumentsTable();
       showToast('Document added! Remember to click Save Documents', 'info');
@@ -1191,8 +1238,8 @@
         <tr>
           <td>${doc.name}</td>
           <td>${doc.category}</td>
-          <td>${doc.dateAdded || '—'}</td>
           <td>${doc.gracePeriod || 14} days</td>
+          <td>${doc.stages ? doc.stages.join(', ') : '—'}</td>
           <td><button class="btn btn-danger" onclick="removeDocument(${idx})">Remove</button></td>
         </tr>
       `).join('');
@@ -1286,7 +1333,10 @@
               <input type="checkbox" 
                 ${role.requiredDocs && role.requiredDocs.includes(doc.id) ? 'checked' : ''} 
                 onchange="updateRoleDocument(${roleIdx}, '${doc.id}', this.checked)">
-              <span style="margin-left: 8px;">${doc.name} (${doc.category})</span>
+              <span style="margin-left: 8px;">
+                ${doc.name} 
+                <span style="font-size: 11px; color: #7f8c8d;">(${doc.category} • ${doc.frequency || 'One-time'})</span>
+              </span>
             </label>
           `).join('');
         }
