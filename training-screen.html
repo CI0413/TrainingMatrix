@@ -823,18 +823,25 @@
                 return;
             }
 
-            const docsHtml = role.requiredDocs.map(doc => `
+            // Setup saves requiredDocs as a list of document IDs; look up each document for name, version, frequency
+            const allDocs = siteData.documents || [];
+            const docsHtml = role.requiredDocs.map(ref => {
+                const docId = typeof ref === 'string' ? ref : ref.docId;
+                const doc = allDocs.find(d => d.id === docId);
+                if (!doc) return '';
+                return `
                 <div class="document-item">
-                    <input type="checkbox" id="doc-${doc.docId}" value="${doc.docId}" 
-                           data-name="${doc.docName}" 
-                           data-frequency="${doc.frequency}"
+                    <input type="checkbox" id="doc-${doc.id}" value="${doc.id}" 
+                           data-name="${doc.name}" 
+                           data-version="${doc.version || ''}"
+                           data-frequency="${doc.frequency || 'One-time'}"
                            onchange="updateSelectedDocuments()">
-                    <label for="doc-${doc.docId}">
-                        ${doc.docName}
-                        <span class="document-badge">${doc.frequency}</span>
+                    <label for="doc-${doc.id}">
+                        ${doc.name}${doc.version ? ' (v' + doc.version + ')' : ''}
+                        <span class="document-badge">${doc.frequency || 'One-time'}</span>
                     </label>
-                </div>
-            `).join('');
+                </div>`;
+            }).join('');
 
             container.innerHTML = docsHtml ? `<div class="documents-list">${docsHtml}</div>` : '<p style="color: #999;">No documents found</p>';
         }
@@ -848,6 +855,8 @@
                 <div class="document-item">
                     <input type="checkbox" id="doc-${doc.id}" value="${doc.id}" 
                            data-name="${doc.name}"
+                           data-version="${doc.version || ''}"
+                           data-frequency="${doc.frequency || 'One-time'}"
                            onchange="updateSelectedDocuments()">
                     <label for="doc-${doc.id}">
                         ${doc.name}
@@ -886,6 +895,7 @@
             )).map(cb => ({
                 id: cb.value,
                 name: cb.dataset.name,
+                version: cb.dataset.version || '',
                 frequency: cb.dataset.frequency || 'Custom'
             }));
 
@@ -1366,6 +1376,7 @@
                     },
                     date: document.getElementById('trainingDate').value,
                     mode: selectedMode,
+                    method: 'electronic',
                     documents: selectedDocuments,
                     employees: selectedEmployees.map(emp => ({
                         ...emp,
@@ -1376,6 +1387,7 @@
 
                 // Collect employee signatures
                 selectedEmployees.forEach(emp => {
+                    if (!employeeSignatures[emp.id]) return; // unsigned = attended but not complete; don't store a blank image
                     const canvas = document.getElementById(`canvas-${emp.id}`);
                     const input = document.getElementById(`typed-${emp.id}`);
                     
