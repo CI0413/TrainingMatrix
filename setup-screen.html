@@ -602,20 +602,7 @@
               <div class="form-row full">
                 <div class="form-group">
                   <label>Applicable Stages (for new employees)</label>
-                  <div style="display: flex; gap: 16px; margin-top: 8px;">
-                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                      <input type="checkbox" id="docStage1" value="Stage 1">
-                      <span>Stage 1</span>
-                    </label>
-                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                      <input type="checkbox" id="docStage2" value="Stage 2">
-                      <span>Stage 2</span>
-                    </label>
-                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                      <input type="checkbox" id="docOngoing" value="Ongoing">
-                      <span>Ongoing</span>
-                    </label>
-                  </div>
+                  <div id="docStagesBox" style="display: flex; gap: 16px; margin-top: 8px; flex-wrap: wrap;"></div>
                 </div>
               </div>
               <button class="btn btn-primary" onclick="addDocument()">Add Document</button>
@@ -737,9 +724,6 @@
                   <label>Training Stage</label>
                   <select id="empTrainingStage">
                     <option value="">-- Select Stage --</option>
-                    <option value="Stage 1">Stage 1</option>
-                    <option value="Stage 2">Stage 2</option>
-                    <option value="Ongoing">Ongoing</option>
                   </select>
                 </div>
                 <div class="form-group">
@@ -1191,9 +1175,7 @@
       
       // Capture stages
       const stages = [];
-      if (document.getElementById('docStage1').checked) stages.push('Stage 1');
-      if (document.getElementById('docStage2').checked) stages.push('Stage 2');
-      if (document.getElementById('docOngoing').checked) stages.push('Ongoing');
+      document.querySelectorAll('.docStageCheck:checked').forEach(cb => stages.push(cb.value));
 
       if (!name || !category) {
         showToast('Please enter document name and category', 'error');
@@ -1219,9 +1201,7 @@
       document.getElementById('docDateAdded').value = new Date().toISOString().split('T')[0];
       document.getElementById('docGracePeriod').value = '14';
       document.getElementById('docFrequency').value = 'One-time';
-      document.getElementById('docStage1').checked = false;
-      document.getElementById('docStage2').checked = false;
-      document.getElementById('docOngoing').checked = false;
+      document.querySelectorAll('.docStageCheck').forEach(cb => cb.checked = false);
 
       renderDocumentsTable();
       showToast('Document added! Remember to click Save Documents', 'info');
@@ -1463,7 +1443,7 @@
           description: 'Critical trainings before working'
         });
         window.appState.gracePeriods.newHireStages.push({
-          stage: 'Remaining',
+          stage: 'Stage 2',
           days: 90,
           description: 'All other required trainings'
         });
@@ -1486,6 +1466,31 @@
           <button class="btn btn-danger" onclick="removeGraceStage(${idx})">Remove</button>
         </div>
       `).join('');
+      renderStageOptions();
+    }
+
+    // Stage choices for documents and employees come from the Grace Periods tab, plus "Ongoing"
+    function renderStageOptions() {
+      const stages = (window.appState.gracePeriods.newHireStages || []).map(s => s.stage).filter(Boolean);
+      const names = (stages.length ? stages : ['Stage 1', 'Stage 2']).concat(['Ongoing']);
+
+      const box = document.getElementById('docStagesBox');
+      if (box) {
+        const checked = Array.from(document.querySelectorAll('.docStageCheck:checked')).map(cb => cb.value);
+        box.innerHTML = names.map(n => `
+          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+            <input type="checkbox" class="docStageCheck" value="${n}" ${checked.includes(n) ? 'checked' : ''}>
+            <span>${n}</span>
+          </label>`).join('');
+      }
+
+      const sel = document.getElementById('empTrainingStage');
+      if (sel) {
+        const current = sel.value;
+        sel.innerHTML = '<option value="">-- Select Stage --</option>' +
+          names.map(n => `<option value="${n}">${n}</option>`).join('');
+        sel.value = current;
+      }
     }
 
     window.removeGraceStage = function(idx) {
@@ -1510,6 +1515,7 @@
 
       try {
         await db.collection('sites').doc(SITE_ID).set({ gracePeriods: window.appState.gracePeriods }, { merge: true });
+        renderStageOptions();
         showToast('Grace periods saved!', 'success');
       } catch (err) {
         console.error('Error:', err);
@@ -1831,6 +1837,7 @@
     loadSiteConfig();
     setTimeout(updateCategoryDropdown, 300);
     setTimeout(updateRoleDropdowns, 500);
+    renderStageOptions();
   </script>
 </body>
 </html>
