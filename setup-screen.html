@@ -721,12 +721,6 @@
               </div>
               <div class="form-row">
                 <div class="form-group">
-                  <label>Training Stage</label>
-                  <select id="empTrainingStage">
-                    <option value="">-- Select Stage --</option>
-                  </select>
-                </div>
-                <div class="form-group">
                   <label>Department (optional)</label>
                   <input type="text" id="empDept" placeholder="e.g., Receiving, Picking">
                 </div>
@@ -752,7 +746,6 @@
                 <th>Name</th>
                 <th>Role</th>
                 <th>Start Date</th>
-                <th>Training Stage</th>
                 <th>Supervisor</th>
                 <th>Actions</th>
               </tr>
@@ -1360,7 +1353,6 @@
       const role = document.getElementById('empRole').value;
       const supervisor = document.getElementById('empSupervisor').value;
       const startDate = document.getElementById('empStartDate').value;
-      const trainingStage = document.getElementById('empTrainingStage').value;
       const dept = document.getElementById('empDept').value;
 
       if (!name || !role) {
@@ -1374,7 +1366,6 @@
         role,
         supervisor,
         startDate,
-        trainingStage,
         dept
       });
 
@@ -1382,7 +1373,6 @@
       document.getElementById('empRole').value = '';
       document.getElementById('empSupervisor').value = '';
       document.getElementById('empStartDate').value = '';
-      document.getElementById('empTrainingStage').value = '';
       document.getElementById('empDept').value = '';
 
       renderEmployeesTable();
@@ -1401,7 +1391,6 @@
           <td>${emp.name}</td>
           <td>${emp.role}</td>
           <td>${emp.startDate || '—'}</td>
-          <td>${emp.trainingStage || '—'}</td>
           <td>${emp.supervisor || '—'}</td>
           <td><button class="btn btn-danger" onclick="removeEmployee(${idx})">Remove</button></td>
         </tr>
@@ -1469,11 +1458,10 @@
       renderStageOptions();
     }
 
-    // Stage choices for documents and employees come from the Grace Periods tab, plus "Ongoing"
+    // Document stage choices come from the Grace Periods tab, plus "Ongoing"
     function renderStageOptions() {
       const stages = (window.appState.gracePeriods.newHireStages || []).map(s => s.stage).filter(Boolean);
       const names = (stages.length ? stages : ['Stage 1', 'Stage 2']).concat(['Ongoing']);
-
       const box = document.getElementById('docStagesBox');
       if (box) {
         const checked = Array.from(document.querySelectorAll('.docStageCheck:checked')).map(cb => cb.value);
@@ -1482,14 +1470,6 @@
             <input type="checkbox" class="docStageCheck" value="${n}" ${checked.includes(n) ? 'checked' : ''}>
             <span>${n}</span>
           </label>`).join('');
-      }
-
-      const sel = document.getElementById('empTrainingStage');
-      if (sel) {
-        const current = sel.value;
-        sel.innerHTML = '<option value="">-- Select Stage --</option>' +
-          names.map(n => `<option value="${n}">${n}</option>`).join('');
-        sel.value = current;
       }
     }
 
