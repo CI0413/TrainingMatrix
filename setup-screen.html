@@ -6,6 +6,7 @@
   <title>DSV Training Compliance - Setup</title>
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
     * {
       margin: 0;
@@ -465,6 +466,7 @@
         <button class="setup-tab-btn" onclick="switchSetupTab('employees')">5. Employees</button>
         <button class="setup-tab-btn" onclick="switchSetupTab('graceperiods')">6. Grace Periods</button>
         <button class="setup-tab-btn" onclick="switchSetupTab('notifications')">7. Notifications</button>
+        <button class="setup-tab-btn" onclick="switchSetupTab('pasttraining')">8. Past Training</button>
       </div>
 
       <!-- TAB: SITE DETAILS -->
@@ -797,6 +799,31 @@
         </div>
       </div>
 
+      <!-- TAB: PAST TRAINING -->
+      <div id="pasttrainingTab" class="setup-tab-content">
+        <div class="setup-section">
+          <div class="section-title">Past Training Records</div>
+          <div class="section-subtitle">Load completed training from your site's existing records so the dashboard shows full training status. Set up Documents, Roles and Employees first.</div>
+
+          <div style="margin-bottom: 24px; padding: 20px; background: #f9f9f9; border-radius: 6px; border: 1px solid #e0e0e0;">
+            <h4 style="color: #0f3460; margin-bottom: 8px;">Step 1: Download the template</h4>
+            <p style="font-size: 13px; color: #7f8c8d; margin-bottom: 16px;">One row per employee, one column per document. Enter the date each employee last completed each document. Leave blank if never completed. "N/A" means the document is not required for that role.</p>
+            <button class="btn btn-secondary" onclick="downloadPastTrainingTemplate()">Download Template (Excel)</button>
+          </div>
+
+          <div style="margin-bottom: 24px; padding: 20px; background: #f9f9f9; border-radius: 6px; border: 1px solid #e0e0e0;">
+            <h4 style="color: #0f3460; margin-bottom: 8px;">Step 2: Upload the completed template</h4>
+            <p style="font-size: 13px; color: #7f8c8d; margin-bottom: 16px;">You'll see a preview before anything is saved.</p>
+            <input type="file" id="pastTrainingFile" accept=".xlsx,.xls,.csv" style="margin-bottom: 12px;">
+            <br>
+            <button class="btn btn-secondary" onclick="checkPastTrainingFile()">Check File</button>
+          </div>
+
+          <div id="pastTrainingPreview"></div>
+          <button class="btn btn-primary" id="pastTrainingSaveBtn" style="display: none;" onclick="savePastTraining()">Save Past Training</button>
+        </div>
+      </div>
+
       <!-- TAB: NOTIFICATIONS -->
       <div id="notificationsTab" class="setup-tab-content">
         <div class="setup-section">
@@ -1062,6 +1089,203 @@
       document.querySelectorAll('.setup-tab-btn').forEach(b => b.classList.remove('active'));
       event.target.classList.add('active');
     }
+
+
+    // ===== PAST TRAINING IMPORT =====
+    let pastTrainingPending = [];
+    let pastTrainingFileName = '';
+
+    function pad2(n) { return String(n).padStart(2, '0'); }
+    function toYMD(d) { return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); }
+
+    // Accepts Excel dates, YYYY-MM-DD, M/D/YYYY and M/D/YY
+    function parseTemplateDate(v) {
+      if (v instanceof Date && !isNaN(v)) return toYMD(v);
+      if (typeof v === 'number' && v > 20000 && v < 80000) {
+        const d = new Date(Math.round((v - 25569) * 86400000));
+        return d.getUTCFullYear() + '-' + pad2(d.getUTCMonth() + 1) + '-' + pad2(d.getUTCDate());
+      }
+      const t = String(v).trim();
+      let m = t.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+      if (m) return check(+m[1], +m[2], +m[3]);
+      m = t.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2}|\d{4})$/);
+      if (m) {
+        let y = +m[3]; if (y < 100) y += 2000;
+        return check(y, +m[1], +m[2]);
+      }
+      return null;
+      function check(y, mo, d) {
+        const dt = new Date(y, mo - 1, d);
+        return (dt.getFullYear() === y && dt.getMonth() === mo - 1 && dt.getDate() === d) ? toYMD(dt) : null;
+      }
+    }
+
+    window.downloadPastTrainingTemplate = function() {
+      const emps = window.appState.employees || [];
+      const docs = window.appState.documents || [];
+      if (!emps.length || !docs.length) {
+        showToast('Add documents and employees first', 'error');
+        return;
+      }
+      const header = ['Employee ID', 'Employee Name', 'Role'].concat(docs.map(d => d.name));
+      const rows = emps.slice().sort((a, b) => (a.name || '').localeCompare(b.name || '')).map(emp => {
+        const role = (window.appState.roles || []).find(r => r.name === emp.role);
+        const req = (role && role.requiredDocs) || [];
+        return [emp.id || '', emp.name || '', emp.role || ''].concat(
+          docs.map(d => req.some(r => (typeof r === 'string' ? r : r.docId) === d.id) ? '' : 'N/A'));
+      });
+      const ws = XLSX.utils.aoa_to_sheet([header].concat(rows));
+      ws['!cols'] = [{ wch: 18 }, { wch: 24 }, { wch: 18 }].concat(docs.map(() => ({ wch: 16 })));
+      const info = XLSX.utils.aoa_to_sheet([
+        ['How to complete this template'],
+        ['1. On the "Past Training" sheet, enter the date each employee LAST completed each document (e.g. 2025-03-14 or 3/14/2025).'],
+        ['2. Leave the cell blank if the employee has never completed it.'],
+        ['3. "N/A" = not required for that role. You can leave it as is.'],
+        ['4. Do not change the Employee ID column or the document names in the top row.'],
+        ['5. Save and upload the file on the Past Training tab.']
+      ]);
+      info['!cols'] = [{ wch: 110 }];
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Past Training');
+      XLSX.utils.book_append_sheet(wb, info, 'Instructions');
+      XLSX.writeFile(wb, 'Past-Training-Template.xlsx');
+    };
+
+    window.checkPastTrainingFile = async function() {
+      const input = document.getElementById('pastTrainingFile');
+      const preview = document.getElementById('pastTrainingPreview');
+      const saveBtn = document.getElementById('pastTrainingSaveBtn');
+      saveBtn.style.display = 'none';
+      pastTrainingPending = [];
+      if (!input.files.length) { showToast('Choose a file first', 'error'); return; }
+
+      const file = input.files[0];
+      pastTrainingFileName = file.name;
+      preview.innerHTML = '<p style="color: #7f8c8d;">Checking file...</p>';
+
+      try {
+        const wb = XLSX.read(await file.arrayBuffer(), { type: 'array' });
+        const sheetName = wb.SheetNames.includes('Past Training') ? 'Past Training' : wb.SheetNames[0];
+        const rows = XLSX.utils.sheet_to_json(wb.Sheets[sheetName], { header: 1, raw: true, defval: '' });
+        if (rows.length < 2) { preview.innerHTML = '<p style="color: #c0392b;">The file has no data rows.</p>'; return; }
+
+        const norm = v => String(v || '').trim().toLowerCase();
+        const header = rows[0].map(h => String(h).trim());
+        const idCol = header.findIndex(h => norm(h) === 'employee id');
+        const nameCol = header.findIndex(h => norm(h) === 'employee name');
+        const errors = [];
+        const docCols = [];
+        header.forEach((h, i) => {
+          if (i === idCol || i === nameCol || norm(h) === 'role' || !h) return;
+          const doc = (window.appState.documents || []).find(d => norm(d.name) === norm(h));
+          if (doc) docCols.push({ i, doc });
+          else errors.push('Column "' + h + '" does not match any document - skipped');
+        });
+
+        const today = toYMD(new Date());
+        const found = [];
+        for (let r = 1; r < rows.length; r++) {
+          const row = rows[r];
+          if (row.every(c => String(c).trim() === '')) continue;
+          const rid = idCol >= 0 ? String(row[idCol]).trim() : '';
+          const rname = nameCol >= 0 ? String(row[nameCol]).trim() : '';
+          const emp = (window.appState.employees || []).find(e => rid && e.id === rid) ||
+                      (window.appState.employees || []).find(e => rname && norm(e.name) === norm(rname));
+          if (!emp) { errors.push('Row ' + (r + 1) + ': employee "' + (rname || rid) + '" not found'); continue; }
+
+          docCols.forEach(({ i, doc }) => {
+            const cell = row[i];
+            const txt = norm(cell instanceof Date ? 'x' : cell);
+            if (txt === '' || txt === 'n/a' || txt === 'na' || txt === '-') return;
+            const date = parseTemplateDate(cell);
+            if (!date) { errors.push('Row ' + (r + 1) + ' (' + emp.name + '), ' + doc.name + ': "' + cell + '" is not a valid date'); return; }
+            if (date > today) { errors.push('Row ' + (r + 1) + ' (' + emp.name + '), ' + doc.name + ': ' + date + ' is in the future'); return; }
+            found.push({ emp, doc, date });
+          });
+        }
+
+        // Skip anything already imported before
+        const existing = new Set();
+        const snap = await db.collection('sites').doc(SITE_ID).collection('trainingSessions')
+          .where('method', '==', 'historical').get();
+        snap.forEach(d => {
+          const s = d.data();
+          (s.documents || []).forEach(doc => (s.employees || []).forEach(e => existing.add(doc.id + '|' + s.date + '|' + e.id)));
+        });
+        pastTrainingPending = found.filter(f => !existing.has(f.doc.id + '|' + f.date + '|' + f.emp.id));
+        const dupes = found.length - pastTrainingPending.length;
+
+        const empCount = new Set(pastTrainingPending.map(f => f.emp.id)).size;
+        const docCount = new Set(pastTrainingPending.map(f => f.doc.id)).size;
+        let html = '<div style="padding: 16px; border-radius: 6px; margin-bottom: 16px; background: #eef6ee; border: 1px solid #b7dfb9;">' +
+          '<strong>' + pastTrainingPending.length + ' completion(s) ready to save</strong> (' + empCount + ' employees, ' + docCount + ' documents)' +
+          (dupes ? '<br><span style="font-size: 13px; color: #7f8c8d;">' + dupes + ' already imported earlier - will be skipped</span>' : '') +
+          '</div>';
+        if (errors.length) {
+          html += '<div style="padding: 16px; border-radius: 6px; margin-bottom: 16px; background: #fdf0ef; border: 1px solid #f1b8b2;">' +
+            '<strong>' + errors.length + ' problem(s) - these will NOT be saved.</strong> Fix them in the file and upload again, or save the rest now.' +
+            '<ul style="margin: 8px 0 0 18px; font-size: 13px;">' +
+            errors.slice(0, 50).map(e => '<li>' + e.replace(/</g, '&lt;') + '</li>').join('') +
+            (errors.length > 50 ? '<li>...and ' + (errors.length - 50) + ' more</li>' : '') + '</ul></div>';
+        }
+        preview.innerHTML = html;
+        if (pastTrainingPending.length) saveBtn.style.display = 'inline-block';
+      } catch (err) {
+        console.error(err);
+        preview.innerHTML = '<p style="color: #c0392b;">Could not read the file. Make sure it is the downloaded template saved as Excel or CSV.</p>';
+      }
+    };
+
+    window.savePastTraining = async function() {
+      if (!pastTrainingPending.length) return;
+      const saveBtn = document.getElementById('pastTrainingSaveBtn');
+      saveBtn.disabled = true;
+
+      // One historical session per document + date, listing everyone who completed it that day
+      const groups = {};
+      pastTrainingPending.forEach(f => {
+        const key = f.doc.id + '|' + f.date;
+        if (!groups[key]) groups[key] = { doc: f.doc, date: f.date, employees: [] };
+        groups[key].employees.push({ id: f.emp.id, name: f.emp.name, role: f.emp.role || '', hasSigned: true });
+      });
+
+      try {
+        const col = db.collection('sites').doc(SITE_ID).collection('trainingSessions');
+        const importedAt = new Date().toISOString();
+        const list = Object.values(groups);
+        for (let start = 0; start < list.length; start += 400) {
+          const batch = db.batch();
+          list.slice(start, start + 400).forEach((g, k) => {
+            const id = 'hist_' + Date.now() + '_' + (start + k);
+            batch.set(col.doc(id), {
+              id,
+              method: 'historical',
+              mode: 'historical',
+              date: g.date,
+              timestamp: g.date + 'T12:00:00.000Z',
+              importedAt,
+              sourceFile: pastTrainingFileName,
+              trainer: { name: 'Historical record', role: 'Imported from site records' },
+              documents: [{ id: g.doc.id, name: g.doc.name, version: g.doc.version || '', frequency: g.doc.frequency || 'One-time' }],
+              employees: g.employees,
+              signatures: {}
+            });
+          });
+          await batch.commit();
+        }
+        showToast(pastTrainingPending.length + ' past completions saved', 'success');
+        document.getElementById('pastTrainingPreview').innerHTML =
+          '<p style="color: #27ae60;"><strong>Saved.</strong> The dashboard now includes these records.</p>';
+        pastTrainingPending = [];
+        saveBtn.style.display = 'none';
+        document.getElementById('pastTrainingFile').value = '';
+      } catch (err) {
+        console.error(err);
+        showToast('Save failed - nothing after the error was saved. Try again.', 'error');
+      } finally {
+        saveBtn.disabled = false;
+      }
+    };
 
     // Show toast
     function showToast(message, type = 'success') {
